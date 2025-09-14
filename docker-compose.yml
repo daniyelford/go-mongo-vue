@@ -1,0 +1,30 @@
+version: "3.8"
+services:
+  back:
+    build: ./back
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - MONGO_URI=mongodb://db:27017
+
+  front:
+    build: ./front
+    ports:
+      - "3000:80"
+    depends_on:
+      - back
+    volumes:
+      - ./front/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+  db:
+    image: mongo:4.4
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
