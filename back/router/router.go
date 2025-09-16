@@ -1,14 +1,16 @@
 package router
 
 import (
-	"go-vue-nosql-back/handlers"
+	"go-mongo-vue-back/handlers"
 
 	"github.com/gorilla/mux"
 )
 
 func NewRouter() *mux.Router {
 	r := mux.NewRouter()
-	r.HandleFunc("/api/users", handlers.GetUsers).Methods("GET")
+	r.HandleFunc("/api/login/send", handlers.SendCode).Methods("POST")
+	r.HandleFunc("/api/login/verify", handlers.VerifyCode).Methods("POST")
+
 	r.HandleFunc("/api/hello", handlers.HelloWorld).Methods("GET")
 	return r
 }

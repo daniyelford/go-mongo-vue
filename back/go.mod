@@ -1,5 +1,10 @@
-module go-vue-nosql-back
+module go-mongo-vue-back
 
 go 1.24.4
 
-require github.com/gorilla/mux v1.8.1 // indirect
+require (
+	github.com/gorilla/mux v1.8.1
+	go.mongodb.org/mongo-driver v1.17.4
+)
+
+require github.com/golang-jwt/jwt/v5 v5.3.0 // indirect

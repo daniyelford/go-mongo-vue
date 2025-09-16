@@ -1,7 +1,7 @@
 package main
 
 import (
-	"go-vue-nosql-back/router"
+	"go-mongo-vue-back/router"
 	"log"
 	"net/http"
 )
