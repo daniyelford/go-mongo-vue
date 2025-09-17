@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var apiKey = "01ZtycjQXUQFlarNuAVGMRmaJHFQilUrKSbGeIUBaeD2ZI6Q"
+var apiKey = os.Getenv("SMS_API_KEY")
 
 type smsPayload struct {
 	Mobile     string `json:"mobile"`
