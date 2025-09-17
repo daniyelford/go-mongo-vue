@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-var apiKey = ""
+var apiKey = "01ZtycjQXUQFlarNuAVGMRmaJHFQilUrKSbGeIUBaeD2ZI6Q"
 
 type smsPayload struct {
 	Mobile     string `json:"mobile"`
