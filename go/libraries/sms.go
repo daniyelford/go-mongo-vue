@@ -21,10 +21,6 @@ type smsPayload struct {
 }
 
 func SendSmsLogin(code, to string) (bool, error) {
-	if os.Getenv("SMS_SANDBOX") == "true" {
-		fmt.Printf("📨 [SANDBOX] Fake SMS sent to %s with code %s\n", to, code)
-		return true, nil
-	}
 	payload := smsPayload{
 		Mobile:     to,
 		TemplateId: 763111,

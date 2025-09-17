@@ -7,8 +7,8 @@
         :country="country"
         :mobile="mobile"
         :loading="loading"
-        :timerEnd="timerEnd"
-        :disableSend="disableSend"
+        :disable-send="disableSend"
+        :timer-end="sendTimerEnd"
         @update:country="country = $event"
         @update:mobile="mobile = $event"
         @submit="sendMobile"
@@ -17,6 +17,9 @@
         v-else
         :code="code"
         :loading="loading"
+        :resend-timer-end="resendTimerEnd"
+        :disable-resend="resendDisabled"
+        :mobile="country + ' ' + mobile"
         @update:code="code = $event"
         @submit="verifyCode"
         @resend="resendCode"
@@ -28,7 +31,6 @@
         </div>
     </b-container>
 </template>
-
 <script setup>
     import { ref, onMounted } from 'vue'
     import { sendApi } from '@/plugins/api'
@@ -43,22 +45,68 @@
     const error = ref('')
     const loading = ref(false)
     const disableSend = ref(false)
-    let timerId = null
-    let timerEnd = null
-    async function resendCode() {
-        error.value = ''
-        loading.value = true
-        const res = await sendApi({
-            method: 'POST',
-            url: '/login/send',
-            data: { country: country.value, mobile: mobile.value }
-        })
-        loading.value = false
-        if (res.error) {
-            error.value = res.message
+    const resendDisabled = ref(false)
+    const sendTimerEnd = ref(null)
+    const resendTimerEnd = ref(null)
+    let sendTimerId = null
+    let resendTimerId = null
+    onMounted(() => {
+        const savedStep = localStorage.getItem('loginStep')
+        const savedMobile = localStorage.getItem('loginMobile')
+        const savedSendEnd = localStorage.getItem('sendTimerEnd')
+        const savedResendEnd = localStorage.getItem('resendTimerEnd')
+        if (savedMobile) {
+            mobile.value = savedMobile
+            step.value = savedStep ? parseInt(savedStep) : 1
         } else {
-            code.value = ''
+            mobile.value = ''
+            step.value = 1
+            localStorage.removeItem('loginStep')
+            localStorage.removeItem('sendTimerEnd')
+            localStorage.removeItem('resendTimerEnd')
         }
+        if (savedSendEnd){
+            const remaining = Math.max(parseInt(savedSendEnd) - Date.now(), 0)
+            if(remaining > 0) startSendTimer(remaining)
+        }
+        if (savedResendEnd){
+            const remainingResend = Math.max(parseInt(savedResendEnd) - Date.now(), 0)
+            if(remainingResend > 0) startResendTimer(remainingResend)
+        }
+    })
+    function startSendTimer(durationMs = 15000) {
+        clearInterval(sendTimerId)
+        let remaining = Math.ceil(durationMs / 1000)
+        disableSend.value = true
+        localStorage.setItem('sendTimerEnd', Date.now() + durationMs)
+        sendTimerId = setInterval(() => {
+            remaining--
+            localStorage.setItem('sendTimerEnd', Date.now() + remaining * 1000)
+            sendTimerEnd.value=remaining
+            if (remaining <= 0) {
+                clearInterval(sendTimerId)
+                sendTimerId = null
+                disableSend.value = false
+                localStorage.removeItem('sendTimerEnd')
+            }
+        }, 1000)
+    }
+    function startResendTimer(durationMs = 60000) {
+        clearInterval(resendTimerId)
+        let remaining = Math.ceil(durationMs / 1000)
+        resendDisabled.value = true
+        localStorage.setItem('resendTimerEnd', Date.now() + durationMs)
+        resendTimerId = setInterval(() => {
+            remaining--
+            localStorage.setItem('resendTimerEnd', Date.now() + remaining * 1000)
+            resendTimerEnd.value = remaining
+            if (remaining <= 0) {
+                clearInterval(resendTimerId)
+                resendTimerId = null
+                resendDisabled.value = false
+                localStorage.removeItem('resendTimerEnd')
+            }
+        }, 1000)
     }
     async function sendMobile() {
         if (disableSend.value) return
@@ -74,14 +122,17 @@
             data: { country: country.value, mobile: mobile.value }
         })
         loading.value = false
-        if (res.error) {
-            error.value = res.message
-        } else {
+        if (res.error) error.value = res.message
+        else {
             step.value = 2
             localStorage.setItem('loginStep', '2')
+            localStorage.setItem('loginMobile', mobile.value)
+            startSendTimer()
+            startResendTimer()
         }
     }
     async function verifyCode() {
+        if(code.value?.length != 6) return
         error.value = ''
         loading.value = true
         const res = await sendApi({
@@ -90,45 +141,36 @@
             data: { country: country.value, mobile: mobile.value, code: code.value }
         })
         loading.value = false
-        if (res.error) {
-            error.value = res.message
-        } else {
+        if (res.error) error.value = res.message
+        else {
             token.value = res.token
             localStorage.setItem('jwt', res.token)
         }
     }
-    function startDisableTimer() {
-        disableSend.value = true
-        const duration = 15000
-        timerEnd = Date.now() + duration
-        localStorage.setItem('sendCodeEnd', timerEnd)
-        if (timerId) clearTimeout(timerId)
-        timerId = setTimeout(() => {
-            disableSend.value = false
-            timerId = null
-            localStorage.removeItem('sendCodeEnd')
-        }, duration)
+    async function resendCode() {
+        if(resendDisabled.value) return
+        if (!mobile.value) {
+            step.value = 1
+            localStorage.setItem('loginStep', '1')
+            error.value = 'incorrect mobile'
+            code.value = ''
+            return
+        }
+        error.value = ''
+        loading.value = true
+        const res = await sendApi({
+            method: 'POST',
+            url: '/login/send',
+            data: { country: country.value, mobile: mobile.value }
+        })
+        loading.value = false
+        if (res.error) error.value = res.message
+        else startResendTimer()
     }
     function editMobile() {
         step.value = 1
         code.value = ''
-        startDisableTimer()
+        localStorage.setItem('loginStep', '1')
+        startSendTimer()
     }
-    onMounted(() => {
-        const savedStep = localStorage.getItem('loginStep')
-        const savedEnd = localStorage.getItem('sendCodeEnd')
-        if (savedStep) step.value = parseInt(savedStep)
-        if (savedEnd) {
-            const endTime = parseInt(savedEnd)
-            const remaining = endTime - Date.now()
-            if (remaining > 0) {
-                disableSend.value = true
-                timerId = setTimeout(() => {
-                    disableSend.value = false
-                    timerId = null
-                    localStorage.removeItem('sendCodeEnd')
-                }, remaining)
-            }
-        }
-    })
 </script>
