@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	sms "go-mongo-vue-go/libraries"
+	"go-mongo-vue-go/models"
 	"log"
 	"math/rand"
 	"net/http"
@@ -20,6 +21,21 @@ import (
 var jwtSecret = []byte("super-secret-key")
 var ctx = context.Background()
 var smsCodesColl *mongo.Collection
+var mongoClient *mongo.Client
+
+type SendCodeRequest struct {
+	Mobile  string `json:"mobile"`
+	Country string `json:"country"`
+}
+type VerifyCodeRequest struct {
+	Mobile  string `json:"mobile"`
+	Country string `json:"country"`
+	Code    string `json:"code"`
+}
+type LoginResponse struct {
+	Token   string `json:"token"`
+	NewUser bool   `json:"newUser"`
+}
 
 func InitSMSCollection(client *mongo.Client, dbName string) {
 	smsCodesColl = client.Database(dbName).Collection("sms_codes")
@@ -32,20 +48,9 @@ func InitSMSCollection(client *mongo.Client, dbName string) {
 		log.Println("failed to create TTL index:", err)
 	}
 }
-
-type SendCodeRequest struct {
-	Mobile  string `json:"mobile"`
-	Country string `json:"country"`
+func InitMongo(client *mongo.Client) {
+	mongoClient = client
 }
-type VerifyCodeRequest struct {
-	Mobile  string `json:"mobile"`
-	Country string `json:"country"`
-	Code    string `json:"code"`
-}
-type LoginResponse struct {
-	Token string `json:"token"`
-}
-
 func SendCode(w http.ResponseWriter, r *http.Request) {
 	var req SendCodeRequest
 	if smsCodesColl == nil {
@@ -107,6 +112,9 @@ func VerifyCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_, _ = smsCodesColl.DeleteOne(ctx, bson.M{"mobile": fullMobile})
+	var user models.User
+	userColl := mongoClient.Database(os.Getenv("DB_NAME")).Collection("users")
+	err = userColl.FindOne(ctx, bson.M{"mobile": fullMobile}).Decode(&user)
 	claims := jwt.MapClaims{
 		"mobile": fullMobile,
 		"exp":    time.Now().Add(time.Minute * 15).Unix(),
@@ -118,5 +126,9 @@ func VerifyCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(LoginResponse{Token: signed})
+	if err == mongo.ErrNoDocuments {
+		json.NewEncoder(w).Encode(LoginResponse{Token: signed, NewUser: true})
+	} else {
+		json.NewEncoder(w).Encode(LoginResponse{Token: signed, NewUser: false})
+	}
 }

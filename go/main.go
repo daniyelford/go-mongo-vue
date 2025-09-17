@@ -27,6 +27,7 @@ func main() {
 	if err := client.Ping(ctx, nil); err != nil {
 		log.Fatal("Mongo ping failed:", err)
 	}
+	handlers.InitMongo(client)
 	handlers.InitSMSCollection(client, os.Getenv("DB_NAME"))
 	r := router.NewRouter()
 	port := os.Getenv("PORT")

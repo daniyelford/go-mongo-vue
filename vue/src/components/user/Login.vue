@@ -35,8 +35,9 @@
     import { ref, onMounted } from 'vue'
     import { sendApi } from '@/plugins/api'
     import { countriesCode } from '@/composables/countries'
-    import LoginMobileInput from '@/components/login/LoginMobileInput.vue'
-    import LoginMobileCode from '@/components/login/LoginMobileCode.vue'
+    import LoginMobileInput from '@/components/user/login/LoginMobileInput.vue'
+    import LoginMobileCode from '@/components/user/login/LoginMobileCode.vue'
+    import router from '@/router'
     const step = ref(1)
     const country = ref('+98')
     const mobile = ref('')
@@ -50,30 +51,6 @@
     const resendTimerEnd = ref(null)
     let sendTimerId = null
     let resendTimerId = null
-    onMounted(() => {
-        const savedStep = localStorage.getItem('loginStep')
-        const savedMobile = localStorage.getItem('loginMobile')
-        const savedSendEnd = localStorage.getItem('sendTimerEnd')
-        const savedResendEnd = localStorage.getItem('resendTimerEnd')
-        if (savedMobile) {
-            mobile.value = savedMobile
-            step.value = savedStep ? parseInt(savedStep) : 1
-        } else {
-            mobile.value = ''
-            step.value = 1
-            localStorage.removeItem('loginStep')
-            localStorage.removeItem('sendTimerEnd')
-            localStorage.removeItem('resendTimerEnd')
-        }
-        if (savedSendEnd){
-            const remaining = Math.max(parseInt(savedSendEnd) - Date.now(), 0)
-            if(remaining > 0) startSendTimer(remaining)
-        }
-        if (savedResendEnd){
-            const remainingResend = Math.max(parseInt(savedResendEnd) - Date.now(), 0)
-            if(remainingResend > 0) startResendTimer(remainingResend)
-        }
-    })
     function startSendTimer(durationMs = 15000) {
         clearInterval(sendTimerId)
         let remaining = Math.ceil(durationMs / 1000)
@@ -131,22 +108,6 @@
             startResendTimer()
         }
     }
-    async function verifyCode() {
-        if(code.value?.length != 6) return
-        error.value = ''
-        loading.value = true
-        const res = await sendApi({
-            method: 'POST',
-            url: '/login/verify',
-            data: { country: country.value, mobile: mobile.value, code: code.value }
-        })
-        loading.value = false
-        if (res.error) error.value = res.message
-        else {
-            token.value = res.token
-            localStorage.setItem('jwt', res.token)
-        }
-    }
     async function resendCode() {
         if(resendDisabled.value) return
         if (!mobile.value) {
@@ -167,10 +128,55 @@
         if (res.error) error.value = res.message
         else startResendTimer()
     }
+    async function verifyCode() {
+        if(code.value?.length != 6) return
+        error.value = ''
+        loading.value = true
+        const res = await sendApi({
+            method: 'POST',
+            url: '/login/verify',
+            data: { country: country.value, mobile: mobile.value, code: code.value }
+        })
+        loading.value = false
+        if (res.error) error.value = res.message
+        else {
+            token.value = res.token
+            localStorage.setItem('jwt', res.token)
+            if(res.newUser){
+                router.push({path:'/register'})
+            }else{
+                router.push({path:'/home'})
+            }
+        }
+    }
     function editMobile() {
         step.value = 1
         code.value = ''
         localStorage.setItem('loginStep', '1')
         startSendTimer()
     }
+    onMounted(() => {
+        const savedStep = localStorage.getItem('loginStep')
+        const savedMobile = localStorage.getItem('loginMobile')
+        const savedSendEnd = localStorage.getItem('sendTimerEnd')
+        const savedResendEnd = localStorage.getItem('resendTimerEnd')
+        if (savedMobile) {
+            mobile.value = savedMobile
+            step.value = savedStep ? parseInt(savedStep) : 1
+        } else {
+            mobile.value = ''
+            step.value = 1
+            localStorage.removeItem('loginStep')
+            localStorage.removeItem('sendTimerEnd')
+            localStorage.removeItem('resendTimerEnd')
+        }
+        if (savedSendEnd){
+            const remaining = Math.max(parseInt(savedSendEnd) - Date.now(), 0)
+            if(remaining > 0) startSendTimer(remaining)
+        }
+        if (savedResendEnd){
+            const remainingResend = Math.max(parseInt(savedResendEnd) - Date.now(), 0)
+            if(remainingResend > 0) startResendTimer(remainingResend)
+        }
+    })
 </script>
