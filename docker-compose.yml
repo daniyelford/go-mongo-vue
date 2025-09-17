@@ -1,7 +1,7 @@
 version: "3.8"
 services:
-  back:
-    build: ./back
+  go:
+    build: ./go
     ports:
       - "8080:8080"
     depends_on:
@@ -9,14 +9,14 @@ services:
     environment:
       - MONGO_URI=mongodb://db:27017
 
-  front:
-    build: ./front
+  vue:
+    build: ./vue
     ports:
       - "3000:80"
     depends_on:
-      - back
+      - go
     volumes:
-      - ./front/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./vue/nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
   db:
     image: mongo:4.4

@@ -1,7 +1,7 @@
 package router
 
 import (
-	"go-mongo-vue-back/handlers"
+	"go-mongo-vue-go/handlers"
 
 	"github.com/gorilla/mux"
 )

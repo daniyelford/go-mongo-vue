@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 )
 
-var apiKey = "01ZtycjQXUQFlarNuAVGMRmaJHFQilUrKSbGeIUBaeD2ZI6Q"
+var apiKey = os.Getenv("SMS_API_KEY")
 
 type smsPayload struct {
 	Mobile     string `json:"mobile"`
@@ -19,7 +20,11 @@ type smsPayload struct {
 	} `json:"parameters"`
 }
 
-func SendSmsForce(code, to string) (bool, error) {
+func SendSmsLogin(code, to string) (bool, error) {
+	if os.Getenv("SMS_SANDBOX") == "true" {
+		fmt.Printf("📨 [SANDBOX] Fake SMS sent to %s with code %s\n", to, code)
+		return true, nil
+	}
 	payload := smsPayload{
 		Mobile:     to,
 		TemplateId: 763111,

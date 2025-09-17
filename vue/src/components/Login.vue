@@ -8,6 +8,7 @@
         :mobile="mobile"
         :loading="loading"
         :timerEnd="timerEnd"
+        :disableSend="disableSend"
         @update:country="country = $event"
         @update:mobile="mobile = $event"
         @submit="sendMobile"

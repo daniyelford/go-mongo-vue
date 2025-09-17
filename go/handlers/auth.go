@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	sms "go-mongo-vue-back/libraries"
+	sms "go-mongo-vue-go/libraries"
 	"math/rand"
 	"net/http"
 	"time"
@@ -33,7 +33,7 @@ func SendCode(w http.ResponseWriter, r *http.Request) {
 	}
 	code := rand.Intn(900000) + 100000
 	codes[req.Mobile] = fmt.Sprintf("%d", code)
-	ok, err := sms.SendSmsForce(codes[req.Mobile], req.Mobile)
+	ok, err := sms.SendSmsLogin(codes[req.Mobile], req.Mobile)
 	if err != nil || !ok {
 		http.Error(w, "failed to send sms", http.StatusInternalServerError)
 		return
@@ -41,7 +41,7 @@ func SendCode(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": "code sent",
-		// "code": codes[req.Mobile], // ❌ فقط برای تست می‌تونی موقت فعال کنی
+		"code":    codes[req.Mobile], // ❌ فقط برای تست می‌تونی موقت فعال کنی
 	})
 }
 func VerifyCode(w http.ResponseWriter, r *http.Request) {
