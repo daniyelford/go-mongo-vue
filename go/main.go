@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-mongo-vue-go/handlers"
 	"go-mongo-vue-go/router"
+	"go-mongo-vue-go/service"
 	"log"
 	"net/http"
 	"os"
@@ -29,6 +30,7 @@ func main() {
 	}
 	handlers.InitMongo(client)
 	handlers.InitSMSCollection(client, os.Getenv("DB_NAME"))
+	service.WebAuthnInit()
 	r := router.NewRouter()
 	port := os.Getenv("PORT")
 	if port == "" {

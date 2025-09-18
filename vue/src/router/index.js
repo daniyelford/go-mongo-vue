@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import jwtDecode from "jwt-decode"
+import { sendApi } from '@/plugins/api';
 import Login from '@/components/user/Login.vue';
 import Register from '@/components/user/Register.vue';
 import Dashboard from '@/components/Dashboard.vue';
@@ -51,16 +53,42 @@ router.beforeEach(async (to, from, next) => {
         document.title = to.name;
     }
     const mustBeLogin=to.meta.isLogin
-    const userIsLogin=false
+    const token = localStorage.getItem('jwt')
+    let userIsLogin = false  
+    if (token) {
+        try {
+            const decoded = jwtDecode(token)
+            const now = Date.now() / 1000
+            if (decoded.exp && decoded.exp > now) {
+                const res = await sendApi({
+                    method: "GET",
+                    url: "/auth/validate",
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+                if (!res.error && res.valid) {
+                    userIsLogin = true
+                } else {
+                    localStorage.removeItem("jwt")
+                }
+            } else {
+                localStorage.removeItem('jwt')
+            }
+        } catch (err) {
+            localStorage.removeItem('jwt')
+        }
+    }
     if(userIsLogin && !mustBeLogin){
         return next('/home')
     }        
     if(!userIsLogin && mustBeLogin){
         return next('/login')
     }
-    // const security = useSecurityStore()
-    // const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
-    // link.href = icon;
+    next()
+});
+export default router;
+// const security = useSecurityStore()
+// const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
+// link.href = icon;
 
 //     if (to.meta.requiresAuth) {
 //         // const ok = await security.checkAuth()
@@ -74,6 +102,3 @@ router.beforeEach(async (to, from, next) => {
 //         // const ok = await security.checkOnlyAuth()
 //         // if (ok) return next('/dashboard')
 //     }
-    next()
-});
-export default router;

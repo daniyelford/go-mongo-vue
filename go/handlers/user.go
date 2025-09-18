@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -18,7 +19,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var jwtSecret = []byte("super-secret-key")
+var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 var ctx = context.Background()
 var smsCodesColl *mongo.Collection
 var mongoClient *mongo.Client
@@ -131,4 +132,26 @@ func VerifyCode(w http.ResponseWriter, r *http.Request) {
 	} else {
 		json.NewEncoder(w).Encode(LoginResponse{Token: signed, NewUser: false})
 	}
+}
+func ValidateToken(w http.ResponseWriter, r *http.Request) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "missing token", http.StatusUnauthorized)
+		return
+	}
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+	if err != nil || !token.Valid {
+		http.Error(w, "invalid token", http.StatusUnauthorized)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"valid": true,
+	})
 }
