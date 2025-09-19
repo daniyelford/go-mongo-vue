@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import jwtDecode from "jwt-decode"
+import { jwtDecode } from "jwt-decode"
 import { sendApi } from '@/plugins/api';
 import Login from '@/components/user/Login.vue';
 import Register from '@/components/user/Register.vue';
