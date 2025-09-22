@@ -16,14 +16,16 @@ import router from '@/router';
                     url: "/auth/logout",
                     headers: { Authorization: `Bearer ${token}` }
                 })
-                if (!res.error && res.Logout) {}
-                else{
+                if (!res.error && res.Logout) {
+                    router.push({path:'/login'})
+                }else{
                     console.error('error1',res.error)
                 }
             } catch (err) {
                 console.error('error',err)
             }finally{
                 localStorage.removeItem('jwt')
+                localStorage.removeItem('refresh')
             }
         }
         router.push({path:'/login'})

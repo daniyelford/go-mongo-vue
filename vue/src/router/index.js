@@ -6,97 +6,75 @@ import Dashboard from '@/components/Dashboard.vue';
 import Home from '@/components/Home.vue';
 import Welcome from '@/components/Welcome.vue';
 import NotFind from '@/components/NotFind.vue';
-const routes = [
-    { 
-        path: '/',
-        name:'خوش آمدید',
-        component: Welcome , 
-        meta:{isLogin: false}
-    },
-    { 
-        path: '/login',
-        name:'ورود',
-        component: Login , 
-        meta:{isLogin: false}
-    },
-    { 
-        path: '/register', 
-        component: Register ,
-        name:'ثبت نام',
-        meta:{isLogin: true}
-    },
-    { 
-        path: '/home', 
-        component: Home ,
-        name:'خانه', 
-        meta:{isLogin: true, hasUserInfo:true}
-    },
-    { 
-        path: '/dashboard', 
-        component: Dashboard ,
-        name:'داشبورد',
-        meta:{isLogin: true, hasUserInfo:true}
-    },
-    {
-        path: '/:pathMatch(.*)*', 
-        name: '404', 
-        component: NotFind 
-    }
-];
-const router = createRouter({
-    history: createWebHistory(),
-    routes,
-});
-router.beforeEach(async (to, from, next) => {
-    if (to.name) {
-        document.title = to.name;
-    }
-    const mustBeLogin=to.meta.isLogin
-    const mustHasInfo=to.meta.hasUserInfo
-    const token = localStorage.getItem('jwt')
-    let userIsLogin,userInfo;
-    if (token) {
-        try {
-            const res = await sendApi({
-                method: "GET",
-                url: "/auth/validate",
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            if (!res.error) {
-                userIsLogin=res.loggedIn
-                userInfo=res.userHasInfo
-            } else {
-                localStorage.removeItem("jwt")
-            }
-        } catch (err) {
-            localStorage.removeItem('jwt')
-        }
-    }
-    if(userIsLogin && mustHasInfo && !userInfo){
-        return next('/register')
-    }
-    if(userIsLogin && !mustBeLogin){
-        return next('/home')
-    }        
-    if(!userIsLogin && mustBeLogin){
-        return next('/login')
-    }
-    next()
-});
-export default router;
-// const security = useSecurityStore()
-// const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
-// link.href = icon;
 
-//     if (to.meta.requiresAuth) {
-//         // const ok = await security.checkAuth()
-//         // if (!ok) return next('/')
-//   }
-//     if (to.meta.checkHasMobileId) {
-//         // const ok = await security.checkHasMobile()
-//         // if (!ok) return next('/')
-//     }
-//     if (to.meta.onlyAuth) {
-//         // const ok = await security.checkOnlyAuth()
-//         // if (ok) return next('/dashboard')
-//     }
+const routes = [
+  { path: '/', name: 'خوش آمدید', component: Welcome, meta: { isLogin: false } },
+  { path: '/login', name: 'ورود', component: Login, meta: { isLogin: false } },
+  { path: '/register', component: Register, name: 'ثبت نام', meta: { isLogin: true } },
+  { path: '/home', component: Home, name: 'خانه', meta: { isLogin: true, hasUserInfo: true } },
+  { path: '/dashboard', component: Dashboard, name: 'داشبورد', meta: { isLogin: true, hasUserInfo: true } },
+  { path: '/:pathMatch(.*)*', name: '404', component: NotFind }
+];
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+});
+
+async function checkToken() {
+  let token = localStorage.getItem('jwt');
+  if (!token) return { loggedIn: false };
+
+  // Validate token
+  try {
+    let res = await sendApi({
+      method: 'GET',
+      url: '/auth/validate',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!res.error) return res; // { loggedIn, userHasInfo }
+    if (res.expired) {
+      // Try refresh
+      const refreshToken = localStorage.getItem('refresh');
+      if (!refreshToken) return { loggedIn: false };
+
+      const refreshRes = await sendApi({
+        method: 'POST',
+        url: '/token/refresh',
+        data: { refreshToken }
+      });
+
+      if (!refreshRes.error && refreshRes.accessToken) {
+        localStorage.setItem('jwt', refreshRes.accessToken);
+        return await checkToken(); // re-validate with new token
+      } else {
+        localStorage.removeItem('jwt');
+        localStorage.removeItem('refresh');
+        return { loggedIn: false };
+      }
+    }
+  } catch (err) {
+    localStorage.removeItem('jwt');
+    return { loggedIn: false };
+  }
+}
+
+router.beforeEach(async (to, from, next) => {
+  if (to.name) document.title = to.name;
+
+  const mustBeLogin = to.meta.isLogin;
+  const mustHasInfo = to.meta.hasUserInfo;
+
+  const status = await checkToken();
+  const userIsLogin = status.loggedIn || false;
+  const userInfo = status.userHasInfo || false;
+
+  if (userIsLogin && mustHasInfo && !userInfo) return next('/register');
+  if (userIsLogin && !mustBeLogin) return next('/home');
+  if (!userIsLogin && mustBeLogin) return next('/login');
+
+  next();
+});
+
+export default router;
