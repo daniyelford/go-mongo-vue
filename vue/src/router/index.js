@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { jwtDecode } from "jwt-decode"
 import { sendApi } from '@/plugins/api';
 import Login from '@/components/user/Login.vue';
 import Register from '@/components/user/Register.vue';
@@ -30,13 +29,13 @@ const routes = [
         path: '/home', 
         component: Home ,
         name:'خانه', 
-        meta:{isLogin: true}
+        meta:{isLogin: true, hasUserInfo:true}
     },
     { 
         path: '/dashboard', 
         component: Dashboard ,
         name:'داشبورد',
-        meta:{isLogin: true}
+        meta:{isLogin: true, hasUserInfo:true}
     },
     {
         path: '/:pathMatch(.*)*', 
@@ -53,29 +52,28 @@ router.beforeEach(async (to, from, next) => {
         document.title = to.name;
     }
     const mustBeLogin=to.meta.isLogin
+    const mustHasInfo=to.meta.hasUserInfo
     const token = localStorage.getItem('jwt')
-    let userIsLogin = false  
+    let userIsLogin,userInfo;
     if (token) {
         try {
-            const decoded = jwtDecode(token)
-            const now = Date.now() / 1000
-            if (decoded.exp && decoded.exp > now) {
-                const res = await sendApi({
-                    method: "GET",
-                    url: "/auth/validate",
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-                if (!res.error && res.valid) {
-                    userIsLogin = true
-                } else {
-                    localStorage.removeItem("jwt")
-                }
+            const res = await sendApi({
+                method: "GET",
+                url: "/auth/validate",
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            if (!res.error) {
+                userIsLogin=res.loggedIn
+                userInfo=res.userHasInfo
             } else {
-                localStorage.removeItem('jwt')
+                localStorage.removeItem("jwt")
             }
         } catch (err) {
             localStorage.removeItem('jwt')
         }
+    }
+    if(userIsLogin && mustHasInfo && !userInfo){
+        return next('/register')
     }
     if(userIsLogin && !mustBeLogin){
         return next('/home')

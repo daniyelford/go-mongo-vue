@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -29,7 +30,15 @@ func main() {
 		log.Fatal("Mongo ping failed:", err)
 	}
 	handlers.InitMongo(client)
-	handlers.InitSMSCollection(client, os.Getenv("DB_NAME"))
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     os.Getenv("REDIS_ADDR"),
+		Password: "",
+		DB:       0,
+	})
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		log.Fatal("Redis ping failed:", err)
+	}
+	handlers.InitRedis(redisClient)
 	service.WebAuthnInit()
 	r := router.NewRouter()
 	port := os.Getenv("PORT")

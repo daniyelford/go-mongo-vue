@@ -6,7 +6,6 @@ import (
 	"fmt"
 	sms "go-mongo-vue-go/libraries"
 	"go-mongo-vue-go/models"
-	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -14,14 +13,14 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 var ctx = context.Background()
-var smsCodesColl *mongo.Collection
+var redisClient *redis.Client
 var mongoClient *mongo.Client
 
 type SendCodeRequest struct {
@@ -38,39 +37,21 @@ type LoginResponse struct {
 	NewUser bool   `json:"newUser"`
 }
 
-func InitSMSCollection(client *mongo.Client, dbName string) {
-	smsCodesColl = client.Database(dbName).Collection("sms_codes")
-	indexModel := mongo.IndexModel{
-		Keys:    bson.M{"expires_at": 1},
-		Options: options.Index().SetExpireAfterSeconds(0),
-	}
-	_, err := smsCodesColl.Indexes().CreateOne(ctx, indexModel)
-	if err != nil {
-		log.Println("failed to create TTL index:", err)
-	}
+func InitRedis(client *redis.Client) {
+	redisClient = client
 }
 func InitMongo(client *mongo.Client) {
 	mongoClient = client
 }
 func SendCode(w http.ResponseWriter, r *http.Request) {
 	var req SendCodeRequest
-	if smsCodesColl == nil {
-		http.Error(w, "database not initialized", http.StatusInternalServerError)
-		return
-	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 	code := fmt.Sprintf("%06d", rand.Intn(900000)+100000)
-	expiresAt := time.Now().Add(5 * time.Minute)
 	fullMobile := req.Country + req.Mobile
-	_, err := smsCodesColl.UpdateOne(
-		ctx,
-		bson.M{"mobile": fullMobile},
-		bson.M{"$set": bson.M{"code": code, "expires_at": expiresAt}},
-		options.Update().SetUpsert(true),
-	)
+	err := redisClient.Set(ctx, "sms:"+fullMobile, code, 5*time.Minute).Err()
 	if err != nil {
 		http.Error(w, "failed to save code", http.StatusInternalServerError)
 		return
@@ -102,20 +83,23 @@ func VerifyCode(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
-	var result struct {
-		Code      string    `bson:"code"`
-		ExpiresAt time.Time `bson:"expires_at"`
-	}
 	fullMobile := req.Country + req.Mobile
-	err := smsCodesColl.FindOne(ctx, bson.M{"mobile": fullMobile}).Decode(&result)
-	if err != nil || result.Code != req.Code || time.Now().After(result.ExpiresAt) {
+	storedCode, err := redisClient.Get(ctx, "sms:"+fullMobile).Result()
+	if err == redis.Nil || storedCode != req.Code {
 		http.Error(w, "invalid or expired code", http.StatusUnauthorized)
 		return
 	}
-	_, _ = smsCodesColl.DeleteOne(ctx, bson.M{"mobile": fullMobile})
+	redisClient.Del(ctx, "sms:"+fullMobile)
 	var user models.User
 	userColl := mongoClient.Database(os.Getenv("DB_NAME")).Collection("users")
 	err = userColl.FindOne(ctx, bson.M{"mobile": fullMobile}).Decode(&user)
+	newUser := false
+	if err == mongo.ErrNoDocuments {
+		newUser = true
+	} else if err != nil {
+		http.Error(w, "database error", http.StatusInternalServerError)
+		return
+	}
 	claims := jwt.MapClaims{
 		"mobile": fullMobile,
 		"exp":    time.Now().Add(time.Minute * 15).Unix(),
@@ -126,32 +110,122 @@ func VerifyCode(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not generate token", http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	if err == mongo.ErrNoDocuments {
-		json.NewEncoder(w).Encode(LoginResponse{Token: signed, NewUser: true})
-	} else {
-		json.NewEncoder(w).Encode(LoginResponse{Token: signed, NewUser: false})
+	err = redisClient.Set(ctx, "token:"+fullMobile, signed, 25000*time.Minute).Err()
+	if err != nil {
+		http.Error(w, "cannot store token", http.StatusInternalServerError)
+		return
 	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(LoginResponse{Token: signed, NewUser: newUser})
 }
 func ValidateToken(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		http.Error(w, "missing token", http.StatusUnauthorized)
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		json.NewEncoder(w).Encode(map[string]any{
+			"loggedIn": false,
+		})
 		return
 	}
 	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method")
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return jwtSecret, nil
 	})
 	if err != nil || !token.Valid {
-		http.Error(w, "invalid token", http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]any{
+			"loggedIn": false,
+		})
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		json.NewEncoder(w).Encode(map[string]any{
+			"loggedIn": false,
+		})
+		return
+	}
+	mobile, ok := claims["mobile"].(string)
+	if !ok || mobile == "" {
+		json.NewEncoder(w).Encode(map[string]any{
+			"loggedIn": false,
+		})
+		return
+	}
+	val, err := redisClient.Get(ctx, "token:"+mobile).Result()
+	if err != nil || val != tokenString {
+		json.NewEncoder(w).Encode(map[string]any{
+			"loggedIn": false,
+		})
+		return
+	}
+	var user models.User
+	userColl := mongoClient.Database(os.Getenv("DB_NAME")).Collection("users")
+	err = userColl.FindOne(ctx, bson.M{"mobile": mobile}).Decode(&user)
+	userHasInfo := true
+	if err == mongo.ErrNoDocuments {
+		userHasInfo = false
+	} else if err != nil {
+		http.Error(w, "database error", http.StatusInternalServerError)
+		return
+	}
 	json.NewEncoder(w).Encode(map[string]any{
-		"valid": true,
+		"loggedIn":    true,
+		"userHasInfo": userHasInfo,
+	})
+}
+func Logout(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		json.NewEncoder(w).Encode(map[string]any{
+			"loggedIn": false,
+		})
+		return
+	}
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return jwtSecret, nil
+	})
+	if err != nil || !token.Valid {
+		json.NewEncoder(w).Encode(map[string]any{
+			"loggedIn": false,
+		})
+		return
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		json.NewEncoder(w).Encode(map[string]any{
+			"loggedIn": false,
+		})
+		return
+	}
+	mobile, ok := claims["mobile"].(string)
+	if !ok || mobile == "" {
+		json.NewEncoder(w).Encode(map[string]any{
+			"loggedIn": false,
+		})
+		return
+	}
+	val, err := redisClient.Get(ctx, "token:"+mobile).Result()
+	if err != nil || val != tokenString {
+		json.NewEncoder(w).Encode(map[string]any{
+			"loggedIn": false,
+		})
+		return
+	}
+	if _, err := redisClient.Get(ctx, "token:"+mobile).Result(); err == redis.Nil {
+		http.Error(w, "invalid or expired code", http.StatusUnauthorized)
+		return
+	}
+	redisClient.Del(ctx, "token:"+mobile)
+	json.NewEncoder(w).Encode(map[string]any{
+		"loggedIn": false,
+		"Logout":   true,
 	})
 }
