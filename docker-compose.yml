@@ -6,8 +6,11 @@ services:
       - "8080:8080"
     depends_on:
       - db
+      - redis
     environment:
       - MONGO_URI=mongodb://db:27017
+      - REDIS_ADDR=redis:6379
+      # - REDIS_PASS=
 
   vue:
     build: ./vue
@@ -28,5 +31,14 @@ services:
     volumes:
       - mongo-data:/data/db
 
+  redis:
+    image: redis:7
+    container_name: redisdb
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
 volumes:
   mongo-data:
+  redis-data:

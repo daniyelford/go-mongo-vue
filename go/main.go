@@ -32,7 +32,7 @@ func main() {
 	handlers.InitMongo(client)
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     os.Getenv("REDIS_ADDR"),
-		Password: "",
+		Password: os.Getenv("REDIS_PASS"),
 		DB:       0,
 	})
 	if err := redisClient.Ping(ctx).Err(); err != nil {
