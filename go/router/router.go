@@ -21,6 +21,8 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/auth/validate", handlers.ValidateToken).Methods("GET")
 	r.HandleFunc("/api/token/refresh", handlers.RefreshToken).Methods("GET")
 
+	r.HandleFunc("/api/register/save", handlers.Register).Methods("POST")
+
 	r.HandleFunc("/api/hello", handlers.HelloWorld).Methods("GET")
 	return r
 }

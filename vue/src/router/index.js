@@ -24,30 +24,29 @@ const router = createRouter({
 async function checkToken() {
   let token = localStorage.getItem('jwt');
   if (!token) return { loggedIn: false };
-
-  // Validate token
   try {
     let res = await sendApi({
       method: 'GET',
       url: '/auth/validate',
       headers: { Authorization: `Bearer ${token}` }
     });
-
-    if (!res.error) return res; // { loggedIn, userHasInfo }
+    if (!res.error) return res;
     if (res.expired) {
-      // Try refresh
       const refreshToken = localStorage.getItem('refresh');
       if (!refreshToken) return { loggedIn: false };
-
       const refreshRes = await sendApi({
         method: 'POST',
         url: '/token/refresh',
         data: { refreshToken }
       });
-
       if (!refreshRes.error && refreshRes.accessToken) {
         localStorage.setItem('jwt', refreshRes.accessToken);
-        return await checkToken(); // re-validate with new token
+        const newRes = await sendApi({
+          method: 'GET',
+          url: '/auth/validate',
+          headers: { Authorization: `Bearer ${refreshRes.accessToken}` }
+        });
+        return newRes;
       } else {
         localStorage.removeItem('jwt');
         localStorage.removeItem('refresh');

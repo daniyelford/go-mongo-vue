@@ -7,6 +7,7 @@ import (
 	"fmt"
 	sms "go-mongo-vue-go/libraries"
 	"go-mongo-vue-go/models"
+	"go-mongo-vue-go/service"
 	"math/rand"
 	"net/http"
 	"os"
@@ -284,4 +285,69 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(map[string]any{"loggedIn": false, "Logout": true})
+}
+
+func Register(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		http.Error(w, `{"success":false,"error":"missing token"}`, http.StatusUnauthorized)
+		return
+	}
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+	if err != nil || !token.Valid {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]any{"success": false, "error": "invalid token"})
+		return
+	}
+	claims := token.Claims.(jwt.MapClaims)
+	mobile, ok := claims["mobile"].(string)
+	if !ok || mobile == "" {
+		http.Error(w, `{"success":false,"error":"invalid token claims"}`, http.StatusUnauthorized)
+		return
+	}
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		http.Error(w, `{"success":false,"error":"cannot parse form"}`, http.StatusBadRequest)
+		return
+	}
+	name := r.FormValue("name")
+	family := r.FormValue("family")
+	if name == "" || family == "" {
+		http.Error(w, `{"success":false,"error":"name/family required"}`, http.StatusBadRequest)
+		return
+	}
+	var photoPath string
+	file, header, err := r.FormFile("photo")
+	if err == nil && file != nil {
+		defer file.Close()
+		fileName := fmt.Sprintf("%s_%d_%s", mobile, time.Now().Unix(), header.Filename)
+		url, err := service.MinioUpload(fileName, file, header.Size, header.Header.Get("Content-Type"))
+		if err != nil {
+			http.Error(w, `{"success":false,"error":"cannot upload photo"}`, http.StatusInternalServerError)
+			return
+		}
+		photoPath = url
+		fmt.Println("File removed from MinIO:", url)
+	}
+
+	userColl := mongoClient.Database(os.Getenv("DB_NAME")).Collection("users")
+	newUser := models.User{
+		Name:         name,
+		Family:       family,
+		Mobile:       mobile,
+		Balance:      0,
+		TokenBalance: 0,
+		Image:        photoPath,
+		FingerTokens: []models.WebAuthnCredential{},
+	}
+	_, err = userColl.InsertOne(ctx, newUser)
+	if err != nil {
+		http.Error(w, `{"success":false,"error":"database error"}`, http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"success":true}`))
 }

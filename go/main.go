@@ -39,6 +39,9 @@ func main() {
 		log.Fatal("Redis ping failed:", err)
 	}
 	handlers.InitRedis(redisClient)
+	if err := service.MinioInit(); err != nil {
+		log.Fatal("MinIO init error:", err)
+	}
 	service.WebAuthnInit()
 	r := router.NewRouter()
 	port := os.Getenv("PORT")
