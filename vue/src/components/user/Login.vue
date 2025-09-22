@@ -26,9 +26,6 @@
         @edit="editMobile"
         />
         <div v-if="error" class="mt-4 text-danger">❌ {{ error }}</div>
-        <div v-if="token" class="mt-4 text-success">
-            ✅ Token received: <code class="d-block bg-light p-2 rounded">{{ token }}</code>
-        </div>
     </b-container>
 </template>
 <script setup>
@@ -42,7 +39,6 @@
     const country = ref('+98')
     const mobile = ref('')
     const code = ref('')
-    const token = ref('')
     const error = ref('')
     const loading = ref(false)
     const disableSend = ref(false)
@@ -140,7 +136,6 @@
         loading.value = false
         if (res.error) error.value = res.message
         else {
-            token.value = res.token
             localStorage.setItem('jwt', res.token)
             if(res.newUser){
                 router.push({path:'/register'})

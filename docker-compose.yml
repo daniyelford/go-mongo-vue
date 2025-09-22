@@ -10,7 +10,7 @@ services:
     environment:
       - MONGO_URI=mongodb://db:27017
       - REDIS_ADDR=redis:6379
-      # - REDIS_PASS=
+      - REDIS_PASS=redisPass123
 
   vue:
     build: ./vue
