@@ -3,6 +3,7 @@ version: "3.8"
 services:
   go:
     build: ./go
+    image: dnylfrd/go-mongo-vue:go-1
     ports:
       - "8080:8080"
     depends_on:
@@ -20,6 +21,7 @@ services:
 
   vue:
     build: ./vue
+    image: dnylfrd/go-mongo-vue:vue-1
     ports:
       - "3000:80"
     depends_on:

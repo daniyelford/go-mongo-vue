@@ -332,7 +332,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		photoPath = url
 		fmt.Println("File removed from MinIO:", url)
 	}
-
 	userColl := mongoClient.Database(os.Getenv("DB_NAME")).Collection("users")
 	newUser := models.User{
 		Name:         name,
