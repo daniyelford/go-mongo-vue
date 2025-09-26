@@ -1,5 +1,4 @@
-<template>hi</template>
-<!-- <template>
+<template>
   <b-container class="my-4">
     <b-card title="تنظیمات کاربر" class="shadow-sm">
       <div class="text-center mb-3">
@@ -37,7 +36,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { sendApi } from '@/plugins/api'
+import { onMounted, ref } from 'vue'
 
 const user = ref({
   avatar: '/images/default-avatar.png',
@@ -60,11 +60,22 @@ function onFileChange(e) {
   }
 }
 
-function saveSettings() {
-  console.log('Form Data:', form.value)
-  // 📌 اینجا باید با axios یا fetch به API ارسال کنی
-  // شامل form.name, form.family و avatar (اگه آپلود شد)
-}
+onMounted(async () => {
+    try {
+        const res = await sendApi({
+            method: "POST",
+            autoCheckToken: true,
+            url: "/user/info",
+            data: data,
+        });
+        if(res.success){
+            console.log(res.user);
+            
+        }
+    } catch (error) {
+        console.log(error);
+    }
+})
 </script>
--->
+
 

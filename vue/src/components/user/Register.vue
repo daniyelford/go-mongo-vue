@@ -57,27 +57,21 @@ function compressImage(file, maxWidth = 800, quality = 0.7) {
     try {
       const img = new Image();
       const reader = new FileReader();
-
       reader.onload = (e) => {
         img.src = e.target.result;
       };
-
       img.onload = () => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
-
         let width = img.width;
         let height = img.height;
-
         if (width > maxWidth) {
           height = (height * maxWidth) / width;
           width = maxWidth;
         }
-
         canvas.width = width;
         canvas.height = height;
         ctx.drawImage(img, 0, 0, width, height);
-
         canvas.toBlob(
           (blob) => {
             if (!blob) return reject("compression failed");
@@ -87,7 +81,6 @@ function compressImage(file, maxWidth = 800, quality = 0.7) {
           quality
         );
       };
-
       reader.readAsDataURL(file);
     } catch (err) {
       reject(err);
@@ -108,10 +101,6 @@ const onFileChange = async (event) => {
   }
 };
 const handleRegister = async () => {
-  let token = localStorage.getItem("jwt");
-  if (!token) {
-    return;
-  }
   const data = new FormData();
   data.append("name", form.value.name);
   data.append("family", form.value.family);
@@ -121,9 +110,9 @@ const handleRegister = async () => {
   try {
     const res = await sendApi({
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
       url: "/register/save",
       data: data,
+      autoCheckToken: true
     });
     if (res.success) {
       form.value = { name: "", family: "", photo: null };

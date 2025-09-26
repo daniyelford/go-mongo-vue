@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"go-mongo-vue-go/handlers"
+	"go-mongo-vue-go/config"
 	"go-mongo-vue-go/router"
 	"go-mongo-vue-go/service"
 	"log"
@@ -29,7 +29,7 @@ func main() {
 	if err := client.Ping(ctx, nil); err != nil {
 		log.Fatal("Mongo ping failed:", err)
 	}
-	handlers.InitMongo(client)
+	config.InitMongo(client)
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     os.Getenv("REDIS_ADDR"),
 		Password: os.Getenv("REDIS_PASS"),
@@ -38,7 +38,7 @@ func main() {
 	if err := redisClient.Ping(ctx).Err(); err != nil {
 		log.Fatal("Redis ping failed:", err)
 	}
-	handlers.InitRedis(redisClient)
+	config.InitRedis(redisClient)
 	if err := service.MinioInit(); err != nil {
 		log.Fatal("MinIO init error:", err)
 	}

@@ -1,5 +1,6 @@
 <template>
 <Logout/>
+<RouterLink :to="{path:'/setting'}">setting</RouterLink>
 hi
 </template>
 <script setup>
