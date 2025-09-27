@@ -7,9 +7,12 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - db
-      - redis
-      - minio
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
     environment:
       - MONGO_URI=mongodb://db:27017
       - REDIS_ADDR=redis:6379
@@ -38,6 +41,11 @@ services:
       - MONGO_INITDB_DATABASE=goMongoVue
     volumes:
       - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--quiet", "127.0.0.1/test", "--eval", "db.runCommand({ ping: 1 })"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7
