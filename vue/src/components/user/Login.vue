@@ -25,6 +25,9 @@
       @resend="resendCode"
       @edit="editMobile"
     />
+    <b-alert v-if="loading || disableSend" >
+      The login button is locked for logging in too much.
+    </b-alert>
     <div v-if="error" class="mt-4 text-danger">❌ {{ error }}</div>
   </b-container>
 </template>
@@ -133,8 +136,8 @@ async function resendCode() {
   if (res.error) {
     error.value = res.message
     if (res.message.includes('too many requests')){
-        startSendTimer(300000)
-        startResendTimer(300000)
+        startSendTimer(150000)
+        startResendTimer(150000)
     } 
   } else{
     startResendTimer()

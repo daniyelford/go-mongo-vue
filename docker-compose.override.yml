@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  go:
+    build:
+      context: ./go
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./go:/app
+    command: air -c .air.toml
+    ports:
+      - "8080:8080"
+
+  vue:
+    build:
+      context: ./vue
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./vue:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    command: npm run dev -- --host

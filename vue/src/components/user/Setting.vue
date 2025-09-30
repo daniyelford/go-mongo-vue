@@ -36,7 +36,7 @@
 
 <script setup>
 import { sendApi } from '@/plugins/api'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 const form = ref({
   name: '',
   family: '',
@@ -50,7 +50,8 @@ function onFileChange(e) {
 
   }
 }
-
+watch(form.name,(name)=>{})
+watch(form.family,(family)=>{})
 onMounted(async () => {
     try {
         const res = await sendApi({
@@ -61,7 +62,7 @@ onMounted(async () => {
         if(res.success){
           form.value.name=res.user.name??''
           form.value.family=res.user.family??''
-          form.value.avatar=res.user.image??''
+          form.value.image=res.user.image??''
         }
     } catch (error) {
         console.log(error);

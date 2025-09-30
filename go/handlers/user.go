@@ -10,6 +10,7 @@ import (
 	"go-mongo-vue-go/service"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -188,6 +189,15 @@ func UserInfo(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	var imageURL string
+	if user.Image != "" {
+		imageURL = fmt.Sprintf(
+			"http://%s/%s/%s",
+			os.Getenv("MINIO_ENDPOINT"),
+			os.Getenv("MINIO_BUCKET"),
+			url.PathEscape(user.Image), // fix کاراکترهایی مثل +
+		)
+	}
 	json.NewEncoder(w).Encode(map[string]any{
 		"success": true,
 		"user": map[string]any{
@@ -196,7 +206,7 @@ func UserInfo(w http.ResponseWriter, r *http.Request) {
 			"mobile":       user.Mobile,
 			"balance":      user.Balance,
 			"tokenBalance": user.TokenBalance,
-			"image":        user.Image,
+			"image":        imageURL,
 			"fingerTokens": user.FingerTokens,
 		},
 	})
