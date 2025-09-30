@@ -3,5 +3,5 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN go install github.com/cosmtrek/air@v1.61.6
+RUN go install github.com/air-verse/air@v1.61.6
 CMD ["air", "-c", ".air.toml"]
