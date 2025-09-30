@@ -145,19 +145,30 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"success":false,"error":"name/family required"}`, http.StatusBadRequest)
 		return
 	}
-	var photoPath string
+	var fileName string
 	file, header, err := r.FormFile("photo")
 	if err == nil && file != nil {
 		defer file.Close()
-		fileName := fmt.Sprintf("%s_%d_%s", mobile, time.Now().Unix(), header.Filename)
-		url, err := service.MinioUpload(fileName, file, header.Size, header.Header.Get("Content-Type"))
-		if err != nil {
+		// فقط اسم فایل ساخته میشه
+		fileName = fmt.Sprintf("%s_%d_%s", mobile, time.Now().Unix(), header.Filename)
+		if _, err := service.MinioUpload(fileName, file, header.Size, header.Header.Get("Content-Type")); err != nil {
 			http.Error(w, `{"success":false,"error":"cannot upload photo"}`, http.StatusInternalServerError)
 			return
 		}
-		photoPath = url
-		fmt.Println("File removed from MinIO:", url)
 	}
+	// var photoPath string
+	// file, header, err := r.FormFile("photo")
+	// if err == nil && file != nil {
+	// 	defer file.Close()
+	// 	fileName := fmt.Sprintf("%s_%d_%s", mobile, time.Now().Unix(), header.Filename)
+	// 	url, err := service.MinioUpload(fileName, file, header.Size, header.Header.Get("Content-Type"))
+	// 	if err != nil {
+	// 		http.Error(w, `{"success":false,"error":"cannot upload photo"}`, http.StatusInternalServerError)
+	// 		return
+	// 	}
+	// 	photoPath = url
+	// 	fmt.Println("File removed from MinIO:", url)
+	// }
 	userColl := config.MongoClient.Database(os.Getenv("DB_NAME")).Collection("users")
 	newUser := models.User{
 		Name:         name,
@@ -165,7 +176,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		Mobile:       mobile,
 		Balance:      0,
 		TokenBalance: 0,
-		Image:        photoPath,
+		Image:        fileName,
 		FingerTokens: []models.WebAuthnCredential{},
 	}
 	_, err = userColl.InsertOne(config.Ctx, newUser)
@@ -191,11 +202,15 @@ func UserInfo(w http.ResponseWriter, r *http.Request) {
 	}
 	var imageURL string
 	if user.Image != "" {
+		publicEndpoint := os.Getenv("MINIO_PUBLIC_ENDPOINT")
+		if publicEndpoint == "" {
+			publicEndpoint = os.Getenv("MINIO_ENDPOINT")
+		}
 		imageURL = fmt.Sprintf(
 			"http://%s/%s/%s",
-			os.Getenv("MINIO_ENDPOINT"),
+			publicEndpoint,
 			os.Getenv("MINIO_BUCKET"),
-			url.PathEscape(user.Image), // fix کاراکترهایی مثل +
+			url.PathEscape(user.Image),
 		)
 	}
 	json.NewEncoder(w).Encode(map[string]any{
