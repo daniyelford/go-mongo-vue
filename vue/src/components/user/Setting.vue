@@ -41,12 +41,6 @@ const form = ref({
   family: '',
   image:''
 })
-function onFileChange(e) {
-  const file = e.target.files[0]
-  if (file) {
-    form.value.image = URL.createObjectURL(file)
-  }
-}
 async function updateUser(field, value) {
   try {
     await sendApi({
