@@ -1,7 +1,7 @@
 <template>
   <b-container class="my-4">
     <b-card title="user setting" class="shadow-sm text-center">
-      <div class="text-center mb-3">
+      <div class="text-center mb-3" @click="inputImage.click()">
         <b-avatar
           v-if="form.image"
           :src="form.image"
@@ -9,21 +9,20 @@
           class="mb-2"
         ></b-avatar>
         <svg class="avatar mb-2" v-else version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0,0,256,256"><g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><g transform="scale(5.33333,5.33333)"><path d="M42.426,43.546c-0.254,-2.034 0.242,-3.538 -0.012,-5.572c-0.155,-1.237 -0.31,-2.479 -0.635,-3.684c-1.376,-5.102 -6.013,-9.194 -11.307,-9.976c-1.671,-0.247 -3.372,-0.19 -5.059,-0.105c-4.429,0.222 -9.028,0.683 -12.816,2.956c-4.094,2.457 -6.816,7.002 -7.022,11.724c-0.068,1.565 0.154,3.059 0.441,4.6c7.34,-0.1 14.707,0.458 22.047,0.348c5.041,-0.075 9.39,-0.358 14.363,-0.291z" fill="#498167"></path><path d="M23.274,4.535c-1.456,0.03 -1.506,0.066 -2.917,0.436c-1.411,0.37 -2.769,1.131 -3.602,2.345c-0.915,1.333 -1.099,3.035 -1.175,4.658c-0.204,4.377 0.271,9.037 2.84,12.556c0.469,0.643 1.001,1.236 1.557,1.803c0.656,0.668 1.359,1.31 2.193,1.725c1.844,0.916 4.146,0.564 5.852,-0.596c1.706,-1.16 2.86,-3.026 3.504,-5.007c0.644,-1.981 0.821,-4.085 0.901,-6.17c0.067,-1.751 0.068,-3.524 -0.32,-5.231c-0.389,-1.707 -1.199,-3.362 -2.524,-4.483c-1.973,-1.67 -3.77,-2.087 -6.309,-2.036z" fill="#fcbf95"></path><path d="M42.91,37.91c-0.15,-1.23 -0.31,-2.51 -0.65,-3.75c-1.346,-4.985 -5.72,-9.043 -10.805,-10.16c0.226,-0.489 0.408,-0.963 0.547,-1.392c0.68,-2.09 0.846,-4.266 0.925,-6.306c0.066,-1.733 0.072,-3.582 -0.333,-5.362c-0.318,-1.4 -1.044,-3.361 -2.688,-4.753c-2.198,-1.86 -4.181,-2.209 -6.641,-2.152h-0.001c-1.427,0.029 -1.582,0.07 -2.791,0.389l-0.243,0.063c-1.684,0.441 -3.063,1.346 -3.887,2.545c-0.975,1.42 -1.183,3.203 -1.262,4.918c-0.256,5.477 0.665,9.617 2.797,12.662c-1.923,0.435 -3.812,1.09 -5.539,2.128c-4.27,2.56 -7.05,7.21 -7.26,12.13c-0.07,1.55 0.13,3 0.44,4.71c0.05,0.24 0.26,0.39 0.5,0.41c3.63,-0.05 7.34,0.06 10.92,0.17c3,0.1 6.09,0.19 9.15,0.19c0.66,0 1.32,0 1.98,-0.01c1.93,-0.03 3.76,-0.09 5.56,-0.15c2.95,-0.1 5.73,-0.19 8.79,-0.14c0.16,-0.02 0.28,-0.06 0.38,-0.17c0.09,-0.11 0.14,-0.25 0.12,-0.4c-0.12,-0.97 -0.06,-1.8 0,-2.69c0.061,-0.89 0.121,-1.81 -0.009,-2.88zM16.08,11.997c0.073,-1.567 0.255,-3.186 1.088,-4.398c0.688,-1.002 1.865,-1.764 3.316,-2.145l0.242,-0.063c1.155,-0.304 1.25,-0.328 2.558,-0.355c2.694,-0.059 4.239,0.446 5.975,1.916c1.435,1.213 2.075,2.96 2.36,4.212c0.379,1.666 0.372,3.437 0.308,5.101c-0.075,1.969 -0.233,4.062 -0.876,6.036c-0.673,2.067 -1.849,3.754 -3.31,4.748c-1.662,1.128 -3.763,1.349 -5.349,0.561c-0.797,-0.395 -1.487,-1.044 -2.059,-1.627c-0.625,-0.637 -1.104,-1.192 -1.51,-1.747c-2.094,-2.873 -2.993,-6.876 -2.743,-12.239zM41.92,40.73c-0.05,0.73 -0.1,1.48 -0.04,2.31c-2.87,-0.03 -5.5,0.06 -8.28,0.15c-1.8,0.06 -3.62,0.12 -5.55,0.15c-3.68,0.06 -7.44,-0.06 -11.08,-0.17c-3,-0.1 -6.08,-0.19 -9.15,-0.19h-1.39c-0.26,-1.46 -0.41,-2.74 -0.35,-4.07c0.19,-4.52 2.85,-8.96 6.77,-11.32c1.751,-1.054 3.698,-1.693 5.689,-2.11c0.317,0.383 0.661,0.774 1.081,1.202c0.629,0.643 1.397,1.361 2.327,1.823c0.771,0.382 1.636,0.569 2.524,0.569c1.31,0 2.666,-0.408 3.832,-1.2c1.198,-0.814 2.052,-1.885 2.669,-2.953c4.846,0.947 9.044,4.772 10.328,9.499c0.31,1.17 0.47,2.41 0.62,3.62c0.12,0.96 0.06,1.8 0,2.69z" fill="#010101"></path></g></g></svg>
-        <div>
-          <b-form-file
+        <input
+            type="file"
+            ref="inputImage"
+            style="display:none"
             accept="image/*"
             @change="onFileChange"
-          ></b-form-file>
-        </div>
+        />
       </div>
-
       <b-form-group label="name" label-for="nameInput">
         <b-form-input
           id="nameInput"
           v-model="form.name"
         ></b-form-input>
       </b-form-group>
-
       <b-form-group label="family" label-for="familyInput">
         <b-form-input
           id="familyInput"
@@ -33,25 +32,49 @@
     </b-card>
   </b-container>
 </template>
-
 <script setup>
 import { sendApi } from '@/plugins/api'
 import { onMounted, ref, watch } from 'vue'
+const inputImage = ref(null)
 const form = ref({
   name: '',
   family: '',
   image:''
 })
-
 function onFileChange(e) {
   const file = e.target.files[0]
   if (file) {
     form.value.image = URL.createObjectURL(file)
-
   }
 }
-watch(form.name,(name)=>{})
-watch(form.family,(family)=>{})
+async function updateUser(field, value) {
+  try {
+    await sendApi({
+      method: "POST",
+      autoCheckToken: true,
+      url: "/user/update",
+      data: { [field]: value }
+    })
+    console.log(`${field} updated successfully`)
+  } catch (err) {
+    console.error(`Failed to update ${field}`, err)
+  }
+}
+function onFileChange(e) {
+  const file = e.target.files[0]
+  if (file) {
+    form.value.image = URL.createObjectURL(file)
+    const fd = new FormData()
+    fd.append('image', file)
+    updateUser('image', fd)
+  }
+}
+watch(() => form.value.name, (val) => {
+  if (val) updateUser('name', val)
+})
+watch(() => form.value.family, (val) => {
+  if (val) updateUser('family', val)
+})
 onMounted(async () => {
     try {
         const res = await sendApi({
@@ -69,5 +92,3 @@ onMounted(async () => {
     }
 })
 </script>
-
-
