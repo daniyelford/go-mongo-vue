@@ -25,6 +25,7 @@
       @resend="resendCode"
       @edit="editMobile"
     />
+    <FingerLogin v-if="step === 1" :mobile="mobile" />
     <b-alert v-if="loading || disableSend" >
       The login button is locked for logging in too much.
     </b-alert>
@@ -36,6 +37,7 @@
 import { ref, onMounted } from 'vue'
 import { sendApi } from '@/plugins/api'
 import { countriesCode } from '@/composables/countries'
+import FingerLogin from '@/components/user/finger/FingerLogin.vue'
 import LoginMobileInput from '@/components/user/login/LoginMobileInput.vue'
 import LoginMobileCode from '@/components/user/login/LoginMobileCode.vue'
 import router from '@/router'
@@ -163,6 +165,7 @@ async function verifyCode() {
       localStorage.setItem('loginStep', '1')
     }
   } else {
+    localStorage.setItem('loginStep', '1')
     localStorage.setItem('jwt', res.accessToken)
     localStorage.setItem('refresh', res.refreshToken)
     if (res.newUser) router.push({ path: '/register' })

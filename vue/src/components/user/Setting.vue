@@ -31,11 +31,13 @@
         ></b-form-input>
       </b-form-group>
     </b-card>
+    <FingerRegister />
   </b-container>
 </template>
 <script setup>
 import { sendApi } from '@/plugins/api'
 import { onMounted, ref, watch } from 'vue'
+import FingerRegister from './finger/FingerRegister.vue'
 const inputImage = ref(null)
 const form = ref({
   name: '',
