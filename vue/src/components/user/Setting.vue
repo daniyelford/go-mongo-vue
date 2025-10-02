@@ -30,8 +30,8 @@
           v-model="form.family"
         ></b-form-input>
       </b-form-group>
+      <FingerRegister />
     </b-card>
-    <FingerRegister />
   </b-container>
 </template>
 <script setup>
