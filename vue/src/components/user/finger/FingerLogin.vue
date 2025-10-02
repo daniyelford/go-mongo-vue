@@ -7,7 +7,7 @@
   </div>
 </template>
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { sendApi } from '@/plugins/api';
 const message = ref("");
 const has = ref(false);
@@ -48,7 +48,7 @@ watch(props.mobile,async(mobile)=>{
     const res = await sendApi({
       url:'/login/fingerPrint/has',
       method:'post',
-      data:mobile
+      data: { mobile }
     })
     if(res.status) has.value=true
     console.log(res);
