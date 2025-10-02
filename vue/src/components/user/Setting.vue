@@ -1,5 +1,6 @@
 <template>
   <b-container class="my-4">
+    <router-link :to="{path:'/home'}">home</router-link>
     <b-card title="user setting" class="shadow-sm text-center">
       <div class="text-center mb-3" @click="inputImage.click()">
         <b-avatar
@@ -42,14 +43,16 @@ const form = ref({
   image:''
 })
 async function updateUser(field, value) {
+  const fd = new FormData()
+  fd.append(field, value)
   try {
-    await sendApi({
+    const res = await sendApi({
       method: "POST",
       autoCheckToken: true,
       url: "/user/update",
-      data: { [field]: value }
+      data: fd
     })
-    console.log(`${field} updated successfully`)
+    console.log("Update result:", res)
   } catch (err) {
     console.error(`Failed to update ${field}`, err)
   }
@@ -58,9 +61,7 @@ function onFileChange(e) {
   const file = e.target.files[0]
   if (file) {
     form.value.image = URL.createObjectURL(file)
-    const fd = new FormData()
-    fd.append('image', file)
-    updateUser('image', fd)
+    updateUser('photo', file)
   }
 }
 watch(() => form.value.name, (val) => {

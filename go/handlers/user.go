@@ -149,26 +149,12 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	file, header, err := r.FormFile("photo")
 	if err == nil && file != nil {
 		defer file.Close()
-		// فقط اسم فایل ساخته میشه
 		fileName = fmt.Sprintf("%s_%d_%s", mobile, time.Now().Unix(), header.Filename)
 		if _, err := service.MinioUpload(fileName, file, header.Size, header.Header.Get("Content-Type")); err != nil {
 			http.Error(w, `{"success":false,"error":"cannot upload photo"}`, http.StatusInternalServerError)
 			return
 		}
 	}
-	// var photoPath string
-	// file, header, err := r.FormFile("photo")
-	// if err == nil && file != nil {
-	// 	defer file.Close()
-	// 	fileName := fmt.Sprintf("%s_%d_%s", mobile, time.Now().Unix(), header.Filename)
-	// 	url, err := service.MinioUpload(fileName, file, header.Size, header.Header.Get("Content-Type"))
-	// 	if err != nil {
-	// 		http.Error(w, `{"success":false,"error":"cannot upload photo"}`, http.StatusInternalServerError)
-	// 		return
-	// 	}
-	// 	photoPath = url
-	// 	fmt.Println("File removed from MinIO:", url)
-	// }
 	userColl := config.MongoClient.Database(os.Getenv("DB_NAME")).Collection("users")
 	newUser := models.User{
 		Name:         name,
@@ -224,5 +210,53 @@ func UserInfo(w http.ResponseWriter, r *http.Request) {
 			"image":        imageURL,
 			"fingerTokens": user.FingerTokens,
 		},
+	})
+}
+func UserUpdate(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	mobile := r.Context().Value(middleware.MobileContextKey).(string)
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		http.Error(w, `{"success":false,"error":"cannot parse form"}`, http.StatusBadRequest)
+		return
+	}
+	name := r.FormValue("name")
+	family := r.FormValue("family")
+	updateFields := bson.M{}
+	if name != "" {
+		updateFields["name"] = name
+	}
+	if family != "" {
+		updateFields["family"] = family
+	}
+	file, header, err := r.FormFile("photo")
+	if err == nil && file != nil {
+		defer file.Close()
+		fileName := fmt.Sprintf("%s_%d_%s", mobile, time.Now().Unix(), header.Filename)
+		if _, err := service.MinioUpload(fileName, file, header.Size, header.Header.Get("Content-Type")); err != nil {
+			http.Error(w, `{"success":false,"error":"cannot upload photo"}`, http.StatusInternalServerError)
+			return
+		}
+		updateFields["image"] = fileName
+	}
+
+	if len(updateFields) == 0 {
+		http.Error(w, `{"success":false,"error":"no fields to update"}`, http.StatusBadRequest)
+		return
+	}
+
+	userColl := config.MongoClient.Database(os.Getenv("DB_NAME")).Collection("users")
+	_, err = userColl.UpdateOne(
+		config.Ctx,
+		bson.M{"mobile": mobile},
+		bson.M{"$set": updateFields},
+	)
+	if err != nil {
+		http.Error(w, `{"success":false,"error":"database error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]any{
+		"success": true,
+		"updated": updateFields,
 	})
 }

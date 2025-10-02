@@ -21,6 +21,7 @@ func NewRouter() *mux.Router {
 	private.HandleFunc("/auth/logout", handlers.Logout).Methods("GET")
 	private.HandleFunc("/auth/validate", handlers.ValidateToken).Methods("GET")
 	private.HandleFunc("/register/save", handlers.Register).Methods("POST")
+	private.HandleFunc("/user/update", handlers.UserUpdate).Methods("POST")
 	private.HandleFunc("/user/info", handlers.UserInfo).Methods("GET")
 	return r
 }
