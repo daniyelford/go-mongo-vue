@@ -7,7 +7,7 @@
   </div>
 </template>
 <script setup>
-import { ref, watchEffect, defineProps } from 'vue';
+import { ref, watchEffect } from 'vue';
 import router from '@/router'
 import { sendApi } from '@/plugins/api';
 import { bufferToBase64Url,base64UrlToUint8ArrayReg } from '@/plugins/base64';

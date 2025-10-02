@@ -30,7 +30,7 @@
     </b-form>
 </template>
 <script setup>
-    import { ref, watch, onMounted, defineProps } from 'vue'
+    import { ref, watch, onMounted } from 'vue'
     import Vue3OtpInput from "vue3-otp-input"
     const props = defineProps({
         code: String,

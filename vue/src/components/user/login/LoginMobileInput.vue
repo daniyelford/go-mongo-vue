@@ -33,7 +33,7 @@
     </b-form>
 </template>
 <script setup>
-    import { ref, watch, defineProps } from 'vue'
+    import { ref, watch } from 'vue'
     import vSelect from 'vue-select'
     import 'vue-select/dist/vue-select.css'
     const props = defineProps({
