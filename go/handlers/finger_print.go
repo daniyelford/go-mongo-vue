@@ -10,15 +10,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
-
 	"github.com/go-webauthn/webauthn/webauthn"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
-
-// -------------------- Helpers --------------------
 
 func saveSessionToRedis(mobile string, session *webauthn.SessionData) error {
 	data, err := json.Marshal(session)
@@ -27,7 +24,6 @@ func saveSessionToRedis(mobile string, session *webauthn.SessionData) error {
 	}
 	return config.RedisClient.Set(config.Ctx, "webauthn_session:"+mobile, data, 5*time.Minute).Err()
 }
-
 func loadSessionFromRedis(mobile string) (*webauthn.SessionData, error) {
 	data, err := config.RedisClient.Get(config.Ctx, "webauthn_session:"+mobile).Bytes()
 	if err == redis.Nil {
@@ -42,11 +38,9 @@ func loadSessionFromRedis(mobile string) (*webauthn.SessionData, error) {
 	}
 	return &session, nil
 }
-
 func deleteSessionFromRedis(mobile string) {
 	config.RedisClient.Del(config.Ctx, "webauthn_session:"+mobile)
 }
-
 func findUserByMobile(mobile string) (*models.User, error) {
 	userColl := config.MongoClient.Database(os.Getenv("DB_NAME")).Collection("users")
 	var user models.User
@@ -58,9 +52,6 @@ func findUserByMobile(mobile string) (*models.User, error) {
 	}
 	return &user, nil
 }
-
-// -------------------- Register --------------------
-
 func RegisterFingerPrintStart(w http.ResponseWriter, r *http.Request) {
 	mobile := r.Context().Value(middleware.MobileContextKey).(string)
 	user, err := findUserByMobile(mobile)
@@ -118,9 +109,6 @@ func RegisterFingerPrintEnd(w http.ResponseWriter, r *http.Request) {
 		"message": "registered successfully",
 	})
 }
-
-// -------------------- Login --------------------
-
 func LoginFingerPrintStart(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Mobile string `json:"mobile"`
@@ -150,20 +138,13 @@ func LoginFingerPrintStart(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(options)
 }
-
 func LoginFingerPrintEnd(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Mobile string `json:"mobile"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Mobile == "" {
-		http.Error(w, "mobile required", http.StatusBadRequest)
+	mobile := r.Header.Get("X-Mobile")
+	if mobile == "" {
+		http.Error(w, "mobile header required", http.StatusBadRequest)
 		return
 	}
-	if body.Mobile == "" {
-		http.Error(w, "mobile required", http.StatusBadRequest)
-		return
-	}
-	user, err := findUserByMobile(body.Mobile)
+	user, err := findUserByMobile(mobile)
 	if err != nil || user == nil {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return

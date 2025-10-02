@@ -10,7 +10,7 @@
 <script setup>
 import { ref } from 'vue';
 import { sendApi } from '@/plugins/api';
-import { base64UrlToUint8Array } from '@/plugins/base64';
+import { base64UrlToUint8Array,bufferToBase64Url } from '@/plugins/base64';
 const message = ref("");
 async function register() {
   try {
@@ -22,11 +22,20 @@ async function register() {
     options.publicKey.challenge = base64UrlToUint8Array(options.publicKey.challenge)
     options.publicKey.user.id = base64UrlToUint8Array(options.publicKey.user.id)
     const credential = await navigator.credentials.create(options);
+    const dataToSend = {
+      id: credential.id,
+      rawId: bufferToBase64Url(credential.rawId),
+      type: credential.type,
+      response: {
+        clientDataJSON: bufferToBase64Url(credential.response.clientDataJSON),
+        attestationObject: bufferToBase64Url(credential.response.attestationObject)
+      }
+    };
     const res = await sendApi({
         method: "POST",
         autoCheckToken: true,
         url: "/register/fingerPrint/end",
-        data: credential.response,
+        data: dataToSend,
     });
     message.value = res.message || "success";
   } catch (e) {

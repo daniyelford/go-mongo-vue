@@ -25,7 +25,7 @@
       @resend="resendCode"
       @edit="editMobile"
     />
-    <FingerLogin v-if="step === 1" :mobile="mobile" />
+    <FingerLogin v-if="step === 1" :mobile="country+mobile" />
     <b-alert v-if="loading || disableSend" >
       The login button is locked for logging in too much.
     </b-alert>
