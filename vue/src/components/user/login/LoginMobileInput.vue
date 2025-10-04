@@ -47,6 +47,12 @@
     const emits = defineEmits(['update:country', 'update:mobile', 'submit'])
     const innerCountry = ref(props.country)
     const innerMobile = ref(props.mobile)
+    watch(() => props.country, val => {
+        innerCountry.value = val
+    })
+    watch(() => props.mobile, val => {
+        innerMobile.value = val
+    })
     watch(innerCountry, val => emits('update:country', val))
     watch(innerMobile, val => emits('update:mobile', val))
 </script>

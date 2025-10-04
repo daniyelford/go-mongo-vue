@@ -1,8 +1,7 @@
 <template>
-  <div>
+  <BaseModal v-model="show" title="finger print login" size="sm">
     <b-button
       v-if="has"
-      variant="primary"
       @click="login"
       class="d-flex align-items-center"
     >
@@ -13,15 +12,17 @@
     <div v-if="message" class="mt-2 alert alert-danger rounded-10">
       {{ message }}
     </div>
-  </div>
+  </BaseModal>
 </template>
 <script setup>
 import { ref, watchEffect } from 'vue';
 import router from '@/router'
 import { sendApi } from '@/plugins/api';
+import BaseModal from '@/components/tooles/BaseModal.vue';
 import { bufferToBase64Url,base64UrlToUint8ArrayReg } from '@/plugins/base64';
 const message = ref("");
 const has = ref(false);
+const show = ref(false);
 const props= defineProps({
     mobile: String,
 })
