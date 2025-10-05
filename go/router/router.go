@@ -14,7 +14,7 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/login/fingerPrint/start", handlers.LoginFingerPrintStart).Methods("POST")
 	r.HandleFunc("/api/login/fingerPrint/end", handlers.LoginFingerPrintEnd).Methods("POST")
 	r.HandleFunc("/api/login/fingerPrint/has", handlers.HasFingerPrint).Methods("POST")
-	r.HandleFunc("/api/token/refresh", handlers.RefreshToken).Methods("GET")
+	r.HandleFunc("/api/token/refresh", handlers.RefreshToken).Methods("POST")
 	private := r.PathPrefix("/api").Subrouter()
 	private.Use(middleware.JWTAuthMiddleware)
 	private.HandleFunc("/register/fingerPrint/start", handlers.RegisterFingerPrintStart).Methods("POST")

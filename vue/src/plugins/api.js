@@ -21,29 +21,28 @@ function removeTokens() {
 export async function sendApi({ method = 'get', url = '', data = {}, headers = {}, autoCheckToken = false }) {
   try {
     let token = getToken();
-    if (autoCheckToken && token) {
-      const res = await api({
-        method: 'GET',
-        url: '/auth/validate',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.data?.expired) {
-        const refreshToken = getRefreshToken();
-        if (!refreshToken) {
-          removeTokens();
-          throw new Error('Session expired');
-        }
-        const refreshRes = await api({
-          method: 'POST',
-          url: '/token/refresh',
-          data: { refreshToken }
+    if (autoCheckToken && token && getRefreshToken()) {
+      try {
+        const res = await api.get('/auth/validate', {
+          headers: { Authorization: `Bearer ${token}` }
         });
-        if (!refreshRes.data?.accessToken) {
-          removeTokens();
-          throw new Error('Session expired');
+        if (res.data?.expired) {
+          const refreshRes = await api.post('/token/refresh', 
+            { refreshToken: getRefreshToken() },
+            { headers: { 'Content-Type': 'application/json' }}
+          );
+          if (refreshRes.data?.accessToken) {
+            token = refreshRes.data.accessToken;
+            setToken(token);
+          } else {
+            removeTokens();
+            throw new Error('Session expired');
+          }
         }
-        token = refreshRes.data.accessToken;
-        setToken(token);
+      } catch (err) {
+        console.warn('Token validation failed:', err.message);
+        removeTokens();
+        return { error: true, message: 'Token validation failed' };
       }
     }
     const response = await api({

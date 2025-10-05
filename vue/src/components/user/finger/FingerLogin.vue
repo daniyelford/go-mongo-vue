@@ -73,6 +73,10 @@ async function login() {
 }
 async function checkFinger() {
   if (!props.mobile) return;
+  if (!localStorage.getItem('jwt')) {
+    console.warn('No token available yet.');
+    return;
+  }
   try {
     const res = await sendApi({
       url: '/login/fingerPrint/has',
