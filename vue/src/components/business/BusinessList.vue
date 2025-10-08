@@ -21,6 +21,22 @@
                 @click="goToBusiness(b.id)"
                 style="cursor: pointer;"
                 >
+                    <Swiper
+                    :modules="[Navigation]"
+                    navigation
+                    class="mb-2"
+                    style="--swiper-navigation-color:#000;">
+                    <SwiperSlide v-for="(media, i) in b.media" :key="i">
+                        <template v-if="media.type === 'image'">
+                        <img :src="media.url" class="img-fluid rounded" alt="" />
+                        </template>
+                        <template v-else-if="media.type === 'video'">
+                        <video controls class="w-100 rounded">
+                            <source :src="media.url" type="video/mp4" />
+                        </video>
+                        </template>
+                    </SwiperSlide>
+                    </Swiper>
                     <p class="mb-1 text-muted">{{ b.category }}</p>
                     <small>{{ b.description }}</small>
                     <template #footer>
@@ -43,6 +59,11 @@
     import { useRouter } from 'vue-router'
     import { sendApi } from '@/plugins/api'
     import AddBusiness from './AddBusiness.vue'
+    import { Swiper, SwiperSlide } from 'swiper/vue'
+    import 'swiper/css'
+    import 'swiper/css/navigation'
+    import { Navigation } from 'swiper/modules'
+    
     const router = useRouter()
     const businesses = ref([])
     const showCreateModal = ref(false)

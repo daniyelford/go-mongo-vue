@@ -123,3 +123,122 @@ func CreateBusiness(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(business)
 }
+func UpdateBusiness(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// --- گرفتن ID از URL ---
+	idStr := r.PathValue("id")
+	businessID, err := primitive.ObjectIDFromHex(idStr)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	// --- احراز هویت ---
+	mobileCtx := r.Context().Value("mobile")
+	if mobileCtx == nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	mobile := mobileCtx.(string)
+
+	userColl := config.MongoClient.Database(os.Getenv("DB_NAME")).Collection("users")
+	var user struct {
+		ID primitive.ObjectID `bson:"_id"`
+	}
+	if err := userColl.FindOne(r.Context(), bson.M{"mobile": mobile}).Decode(&user); err != nil {
+		http.Error(w, "user not found", http.StatusUnauthorized)
+		return
+	}
+
+	// --- گرفتن بیزینس ---
+	bizColl := config.MongoClient.Database(os.Getenv("DB_NAME")).Collection("businesses")
+	var biz models.Business
+	if err := bizColl.FindOne(r.Context(), bson.M{"_id": businessID, "user_id": user.ID}).Decode(&biz); err != nil {
+		http.Error(w, "business not found", http.StatusNotFound)
+		return
+	}
+
+	if err := r.ParseMultipartForm(20 << 20); err != nil {
+		http.Error(w, "failed to parse form", http.StatusBadRequest)
+		return
+	}
+
+	// --- ویرایش فیلدها ---
+	update := bson.M{
+		"updated_at": time.Now(),
+	}
+	if name := r.FormValue("name"); name != "" {
+		update["name"] = name
+	}
+	if cat := r.FormValue("category"); cat != "" {
+		update["category"] = cat
+	}
+	if desc := r.FormValue("description"); desc != "" {
+		update["description"] = desc
+	}
+
+	// --- حذف مدیاهای انتخابی ---
+	deleteMedia := r.MultipartForm.Value["delete_media[]"]
+	var newMedia []models.Media
+	for _, m := range biz.Media {
+		toDelete := false
+		for _, d := range deleteMedia {
+			if m.URL == d {
+				toDelete = true
+				break
+			}
+		}
+		if !toDelete {
+			newMedia = append(newMedia, m)
+		}
+	}
+
+	// --- آپلود فایل‌های جدید ---
+	files := r.MultipartForm.File["media[]"]
+	for _, fileHeader := range files {
+		src, err := fileHeader.Open()
+		if err != nil {
+			continue
+		}
+		defer src.Close()
+
+		fileName := fmt.Sprintf("%d-%s", time.Now().UnixNano(), filepath.Base(fileHeader.Filename))
+		contentType := fileHeader.Header.Get("Content-Type")
+
+		_, err = service.MinioUpload(fileName, src, fileHeader.Size, contentType)
+		if err != nil {
+			fmt.Println("upload error:", err)
+			continue
+		}
+
+		fileURL, _ := service.MinioGetURL(fileName, 24*time.Hour)
+		fileType := "other"
+		if len(contentType) >= 5 {
+			if contentType[:5] == "image" {
+				fileType = "image"
+			} else if contentType[:5] == "video" {
+				fileType = "video"
+			}
+		}
+
+		newMedia = append(newMedia, models.Media{
+			URL:  fileURL,
+			Type: fileType,
+		})
+	}
+
+	update["media"] = newMedia
+
+	// --- ذخیره در دیتابیس ---
+	_, err = bizColl.UpdateOne(r.Context(),
+		bson.M{"_id": businessID, "user_id": user.ID},
+		bson.M{"$set": update},
+	)
+	if err != nil {
+		http.Error(w, "cannot update business", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{"message": "updated successfully"})
+}
