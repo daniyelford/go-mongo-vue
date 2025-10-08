@@ -21,7 +21,7 @@
                 />
             </b-form-group>
         </div>
-        <b-button type="submit" variant="primary" :disabled="props.loading || props.disableSend">
+        <b-button size="lg" variant="primary" :disabled="props.loading || props.disableSend" type="submit" class="w-100">
             {{ props.loading
                 ? 'Sending...'
                 : (props.disableSend

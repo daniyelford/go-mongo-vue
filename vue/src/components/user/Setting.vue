@@ -1,6 +1,6 @@
 <template>
-  <b-container class="my-4">
-    <router-link :to="{path:'/home'}">home</router-link>
+  <b-container>
+    <router-link class="btn btn-danger" style="width: 100%;border-radius: 30px 30px 0px 0px;" :to="{path:'/home'}">back</router-link>
     <b-card title="user setting" class="shadow-sm text-center">
       <div class="text-center mb-3" @click="inputImage.click()">
         <b-avatar

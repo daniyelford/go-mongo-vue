@@ -1,5 +1,5 @@
 <template>
-  <b-container class="p-4" style="max-width: 400px;">
+  <b-container class="p-4 mt-5 alert alert-light" style="max-width: 400px;">
     <h2 class="mb-4">Login</h2>
     <LoginMobileInput
       v-if="step === 1"

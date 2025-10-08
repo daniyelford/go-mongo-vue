@@ -1,76 +1,54 @@
 <template>
-  <Transition name="fade">
-    <div
-      v-if="modelValue"
-      class="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
-      @click.self="close"
-    >
-      <Transition name="slide-up">
-        <div
-          class="bg-white rounded-2xl shadow-lg w-full mx-4"
-          :class="{
-            'max-w-sm': size === 'sm',
-            'max-w-md': size === 'md',
-            'max-w-lg': size === 'lg',
-          }"
-        >
-          <!-- Header -->
-          <div class="flex justify-between items-center border-b px-4 py-3">
-            <h3 class="text-lg font-semibold">{{ title }}</h3>
-            <button @click="close" class="text-gray-400 hover:text-gray-600">
-              ✕
-            </button>
-          </div>
-
-          <!-- Body -->
-          <div class="p-4">
-            <slot />
-          </div>
-
-          <!-- Footer -->
-          <div
-            v-if="$slots.footer"
-            class="flex justify-end border-t px-4 py-3 gap-2"
-          >
-            <slot name="footer" />
-          </div>
-        </div>
-      </Transition>
-    </div>
-  </Transition>
+  <b-modal
+    v-model="innerValue"
+    :title="title"
+    :size="size"
+    centered
+    hide-footer
+    no-close-on-backdrop
+    no-close-on-esc
+    :body-class="'p-4'"
+    :dialog-class="'rounded-2xl shadow-lg'"
+    :header-class="'border-b'"
+    :header-bg-variant="'white'"
+    :body-bg-variant="'white'"
+    :footer-bg-variant="'white'"
+    :content-class="'rounded-2xl overflow-hidden'"
+  >
+    <slot />
+    <template #footer>
+      <div v-if="$slots.footer" class="d-flex justify-content-end gap-2 border-top pt-3">
+        <slot name="footer" />
+      </div>
+    </template>
+  </b-modal>
 </template>
 
 <script setup>
+import { ref, watch } from 'vue'
+
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
   title: { type: String, default: '' },
-  size: { type: String, default: 'md' }, // sm, md, lg
+  size: { type: String, default: 'md' },
 })
 
 const emit = defineEmits(['update:modelValue'])
 
-function close() {
-  emit('update:modelValue', false)
-}
+const innerValue = ref(props.modelValue)
+
+watch(() => props.modelValue, val => (innerValue.value = val))
+watch(innerValue, val => emit('update:modelValue', val))
 </script>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
+.modal.fade .modal-dialog {
+  transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+  transform: translateY(30px);
   opacity: 0;
 }
-
-.slide-up-enter-active,
-.slide-up-leave-active {
-  transition: transform 0.25s ease, opacity 0.25s ease;
-}
-.slide-up-enter-from,
-.slide-up-leave-to {
-  transform: translateY(40px);
-  opacity: 0;
+.modal.show .modal-dialog {
+  transform: translateY(0);
+  opacity: 1;
 }
 </style>

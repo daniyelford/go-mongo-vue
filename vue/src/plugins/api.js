@@ -4,6 +4,25 @@ const api = axios.create({
   baseURL: '/api',
   timeout: 5000,
 });
+// لاگ گرفتن از پاسخ‌های خطا
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      console.error("API Error Response:", {
+        status: error.response.status,
+        data: error.response.data,
+        url: error.config.url,
+        method: error.config.method,
+      });
+    } else if (error.request) {
+      console.error("API No Response:", error.request);
+    } else {
+      console.error("API Setup Error:", error.message);
+    }
+    return Promise.reject(error);
+  }
+);
 function getToken() {
   return localStorage.getItem('jwt');
 }
@@ -45,11 +64,12 @@ export async function sendApi({ method = 'get', url = '', data = {}, headers = {
         return { error: true, message: 'Token validation failed' };
       }
     }
+    let hdr=autoCheckToken && token ? { ...headers, Authorization: `Bearer ${token}` } : headers
     const response = await api({
       method,
       url,
       data,
-      headers: autoCheckToken && token ? { ...headers, Authorization: `Bearer ${token}` } : headers
+      headers: hdr
     });
     return response.data;
   } catch (error) {

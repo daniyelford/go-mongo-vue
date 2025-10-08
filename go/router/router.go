@@ -9,11 +9,11 @@ import (
 
 func NewRouter() *mux.Router {
 	r := mux.NewRouter()
+	r.HandleFunc("/api/login/fingerPrint/has", handlers.HasFingerPrint).Methods("POST")
 	r.HandleFunc("/api/login/send", handlers.SendCode).Methods("POST")
 	r.HandleFunc("/api/login/verify", handlers.VerifyCode).Methods("POST")
 	r.HandleFunc("/api/login/fingerPrint/start", handlers.LoginFingerPrintStart).Methods("POST")
 	r.HandleFunc("/api/login/fingerPrint/end", handlers.LoginFingerPrintEnd).Methods("POST")
-	r.HandleFunc("/api/login/fingerPrint/has", handlers.HasFingerPrint).Methods("POST")
 	r.HandleFunc("/api/token/refresh", handlers.RefreshToken).Methods("POST")
 	private := r.PathPrefix("/api").Subrouter()
 	private.Use(middleware.JWTAuthMiddleware)
@@ -24,5 +24,7 @@ func NewRouter() *mux.Router {
 	private.HandleFunc("/register/save", handlers.Register).Methods("POST")
 	private.HandleFunc("/user/update", handlers.UserUpdate).Methods("POST")
 	private.HandleFunc("/user/info", handlers.UserInfo).Methods("GET")
+	private.HandleFunc("/user/business", handlers.GetUserBusinesses).Methods("GET")
+	private.HandleFunc("/user/business/add", handlers.CreateBusiness).Methods("POST")
 	return r
 }
