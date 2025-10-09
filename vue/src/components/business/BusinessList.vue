@@ -60,14 +60,12 @@
     import { sendApi } from '@/plugins/api'
     import AddBusiness from './AddBusiness.vue'
     import { Swiper, SwiperSlide } from 'swiper/vue'
+    import { Navigation } from 'swiper/modules'
     import 'swiper/css'
     import 'swiper/css/navigation'
-    import { Navigation } from 'swiper/modules'
-    
     const router = useRouter()
     const businesses = ref([])
     const showCreateModal = ref(false)
-
     const goToBusiness = (id) => router.push(`/business/${id}`)
     onMounted(async () => {
         try {
