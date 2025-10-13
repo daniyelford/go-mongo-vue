@@ -2,7 +2,7 @@
     <b-card class="shadow-sm rounded-4">
         <div class="d-flex justify-content-between align-items-center mb-2">
             <b-card-title class="m-0">📄 Posts</b-card-title>
-            <b-button variant="success" size="sm" @click="toggleAddModal">➕ Add Post</b-button>
+            <b-button variant="success" size="sm" @click="show.value=true">➕ Add Post</b-button>
         </div>
         <b-list-group flush v-if="posts.length>0">
         <b-list-group-item
@@ -34,19 +34,19 @@
           <b-button
             variant="primary"
             @click="loadMore"
-            :disabled="loading || finished"
-          >
+            :disabled="loading || finished">
             {{ loading ? 'loading...' : finished ? 'end' : 'more' }}
           </b-button>
         </div>
     </b-card>
     <BaseModal v-model="show" size="lg" title="add posts">
-        <AddPost @add="toggleAddModal"/>
+        <AddPost @add="add"/>
     </BaseModal>
-    <EditPost
-    v-model:show="showEditModal"
-    :post-data="editingPost"
-    @updated="refreshPosts"/>
+    <BaseModal v-model="showEdit" size="lg" title="Edit Post">
+        <EditPost
+        :post-data="editingPost"
+        @edit="edit"/>
+    </BaseModal>
 </template>
 <script setup>
     import { ref, onMounted, onUnmounted  } from 'vue'
@@ -57,16 +57,16 @@
     import { Swiper, SwiperSlide } from 'swiper/vue';
     import 'swiper/swiper-bundle.css';
     const show = ref(false)
+    const showEdit = ref(false)
     const posts = ref([])
     const page = ref(1)
     const limit = 10
     const loading = ref(false)
     const finished = ref(false)
     const editingPost = ref(null)
-    const showEditModal = ref(false)
     let refreshInterval = null
-    const toggleAddModal = () => {
-        show.value = !show.value
+    const add = () => {
+        show.value = false
         refreshPosts()
     }
     const mapPosts = (rawPosts) => {
@@ -94,9 +94,14 @@
             console.error('خطا در حذف پست:', e)
         }
     }
+    const edit = () => {
+        showEdit.value = false
+        editingPost.value = null
+        refreshPosts()
+    }
     const editPost = (post) => {
+        showEdit.value = true
         editingPost.value = { ...post }
-        showEditModal.value = true
     }
     const loadPosts = async () => {
         if (loading.value || finished.value) return

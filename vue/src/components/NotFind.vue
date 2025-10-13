@@ -1,1 +1,1 @@
-<template>hi</template>
+<template>404</template>

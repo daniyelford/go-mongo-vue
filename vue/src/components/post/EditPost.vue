@@ -1,5 +1,4 @@
 <template>
-  <BaseModal v-model="show" size="lg" title="Edit Post">
     <b-form @submit.prevent="submitEdit" enctype="multipart/form-data">
       <b-form-group label="Media" class="mt-3">
         <div
@@ -71,25 +70,18 @@
         </b-button>
       </div>
     </b-form>
-  </BaseModal>
 </template>
 <script setup>
 import { ref, watch, defineEmits, defineProps } from 'vue'
 import { sendApi } from '@/plugins/api'
-import BaseModal from '@/components/tooles/BaseModal.vue'
 const props = defineProps({
-  modelValue: Boolean,
   postData: Object
 })
-const emit = defineEmits(['update:show', 'updated'])
-const show = ref(props.modelValue)
-watch(() => props.modelValue, v => show.value = v)
-watch(show, v => emit('update:show', v))
+const emit = defineEmits(['edit'])
 const post = ref({ title: '', content: '', media: [] })
 watch(() => props.postData, val => {
   if (val) post.value = { ...val }
 })
-
 const files = ref([])
 const loading = ref(false)
 const mediaFile = ref(null)
@@ -123,8 +115,7 @@ const submitEdit = async () => {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
     if (res.success) {
-      emit('updated')
-      show.value = false
+      emit('edit')
     } else {
       alert(res.error || 'Update failed')
     }
