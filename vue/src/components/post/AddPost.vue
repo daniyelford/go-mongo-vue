@@ -138,6 +138,7 @@
                 url: '/posts/create',
                 data: formData,
                 method: 'POST',
+                headers: { 'Content-Type': 'multipart/form-data' },
                 autoCheckToken: true
             })
             if (res.success) {

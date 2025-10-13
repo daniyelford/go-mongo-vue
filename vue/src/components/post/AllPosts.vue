@@ -67,6 +67,7 @@
     let refreshInterval = null
     const toggleAddModal = () => {
         show.value = !show.value
+        loadPosts()
     }
     const mapPosts = (rawPosts) => {
         return rawPosts.map(p => ({
@@ -78,7 +79,6 @@
             self: p.self
         }))
     }
-
     const loadMore = () => loadPosts()
     const deletePost = async (id) => {
         if (!confirm('آیا مطمئنی می‌خواهی این پست را حذف کنی؟')) return
@@ -94,7 +94,6 @@
             console.error('خطا در حذف پست:', e)
         }
     }
-
     const editPost = (post) => {
         editingPost.value = { ...post }
         showEditModal.value = true

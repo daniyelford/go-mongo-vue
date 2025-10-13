@@ -74,7 +74,7 @@
   </BaseModal>
 </template>
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, defineEmits, defineProps } from 'vue'
 import { sendApi } from '@/plugins/api'
 import BaseModal from '@/components/tooles/BaseModal.vue'
 const props = defineProps({
@@ -115,7 +115,8 @@ const submitEdit = async () => {
       url: '/posts/edit',
       data: formData,
       method: 'PUT',
-      autoCheckToken: true
+      autoCheckToken: true,
+      headers: { 'Content-Type': 'multipart/form-data' }
     })
     if (res.success) {
       emit('updated')
