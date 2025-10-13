@@ -116,7 +116,6 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 	form := r.MultipartForm
 	files := form.File["media[]"]
-	fmt.Printf("files to insert: %+v\n", form.File)
 	var mediaList []models.PostMedia
 	for _, header := range files {
 		file, err := header.Open()
@@ -136,7 +135,6 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 			Filename: fileName,
 		})
 	}
-	fmt.Println("Media list:", mediaList)
 	post := models.Post{
 		ID:        primitive.NewObjectID(),
 		UserID:    userID,
@@ -146,7 +144,6 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	fmt.Printf("Post to insert: %+v\n", post)
 	postColl := config.MongoClient.Database(os.Getenv("DB_NAME")).Collection("posts")
 	_, err = postColl.InsertOne(config.Ctx, post)
 	if err != nil {
