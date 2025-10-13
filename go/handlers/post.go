@@ -73,7 +73,6 @@ func GetAllPosts(w http.ResponseWriter, r *http.Request) {
 		publicEndpoint = os.Getenv("MINIO_ENDPOINT")
 	}
 	bucket := os.Getenv("MINIO_BUCKET")
-
 	for i := range posts {
 		for j := range posts[i].Media {
 			if posts[i].Media[j].Filename != "" {
