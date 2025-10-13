@@ -4,29 +4,53 @@
             <b-card-title class="m-0">📄 Posts</b-card-title>
             <b-button variant="success" size="sm" @click="show.value=true">➕ Add Post</b-button>
         </div>
-        <b-list-group flush v-if="posts.length>0">
-        <b-list-group-item
-          v-for="post in posts"
-          :key="post._id"
-          class="d-flex justify-content-between align-items-center">
-          <div v-if="post.media?.length" class="mt-2">
-            <swiper :slides-per-view="1" navigation pagination>
-                <swiper-slide v-for="(item, index) in post.media" :key="index">
-                    <img v-if="item.type.startsWith('image/')" :src="item.url" class="img-fluid"/>
-                    <video v-else-if="item.type.startsWith('video/')" :src="item.url" controls class="w-100"/>
-                </swiper-slide>
-            </swiper>
-        </div>
-          <div>
-            <h5 class="mb-1">{{ post.title }}</h5>
-            <small class="text-muted">{{ post.content }}</small>
-          </div>
-          <div v-if="post.self">
-            <b-button size="sm" variant="outline-warning" @click="editPost(post)">edit</b-button>
-            <b-button size="sm" variant="outline-danger" class="ms-2" @click="deletePost(post._id)">delete</b-button>
-          </div>
-        </b-list-group-item>
-        </b-list-group>
+        <b-row v-if="posts.length > 0" class="g-3">
+            <b-col
+                v-for="post in posts"
+                :key="post._id"
+                cols="12" md="6" lg="4"
+            >
+                <b-card class="h-100 shadow-sm">
+                <div v-if="post.media?.length" class="mb-2">
+                    <swiper :slides-per-view="1" navigation pagination>
+                    <swiper-slide
+                        v-for="(item, index) in post.media"
+                        :key="index"
+                    >
+                        <img
+                        v-if="item.type.startsWith('image/')"
+                        :src="item.url"
+                        class="img-fluid rounded"
+                        style="object-fit: cover; width: 100%; height: 250px;"
+                        />
+                        <video
+                        v-else-if="item.type.startsWith('video/')"
+                        :src="item.url"
+                        controls
+                        class="w-100 rounded"
+                        style="height: 250px; object-fit: cover;"
+                        />
+                    </swiper-slide>
+                    </swiper>
+                </div>
+                <h5 class="mb-1">{{ post.title }}</h5>
+                <p class="text-muted small mb-2" style="min-height: 50px;">
+                    {{ post.content }}
+                </p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">🕓 {{ new Date(post.createdAt).toLocaleString() }}</small>
+                    <div v-if="post.self">
+                    <b-button size="sm" variant="outline-warning" @click="editPost(post)">
+                        ✏️
+                    </b-button>
+                    <b-button size="sm" variant="outline-danger" class="ms-2" @click="deletePost(post._id)">
+                        🗑️
+                    </b-button>
+                    </div>
+                </div>
+                </b-card>
+            </b-col>
+            </b-row>
         <b-alert v-else show variant="danger">
             You have no posts yet.
         </b-alert>
