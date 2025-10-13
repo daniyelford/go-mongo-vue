@@ -22,9 +22,11 @@ func NewRouter() *mux.Router {
 	private.HandleFunc("/auth/logout", handlers.Logout).Methods("GET")
 	private.HandleFunc("/auth/validate", handlers.ValidateToken).Methods("GET")
 	private.HandleFunc("/register/save", handlers.Register).Methods("POST")
-	private.HandleFunc("/user/update", handlers.UserUpdate).Methods("POST")
+	private.HandleFunc("/user/update", handlers.UserUpdate).Methods("PUT")
 	private.HandleFunc("/user/info", handlers.UserInfo).Methods("GET")
 	private.HandleFunc("/posts/all", handlers.GetAllPosts).Methods("POST")
+	private.HandleFunc("/posts/create", handlers.CreatePost).Methods("POST")
+	private.HandleFunc("/posts/edit", handlers.EditPost).Methods("PUT")
+	private.HandleFunc("/posts/delete", handlers.DeletePost).Methods("DELETE")
 	return r
-
 }

@@ -49,7 +49,7 @@ async function updateUser(field, value) {
   fd.append(field, value)
   try {
     const res = await sendApi({
-      method: "POST",
+      method: "PUT",
       autoCheckToken: true,
       url: "/user/update",
       data: fd
