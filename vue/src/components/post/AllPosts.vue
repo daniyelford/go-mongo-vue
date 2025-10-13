@@ -67,7 +67,7 @@
     let refreshInterval = null
     const toggleAddModal = () => {
         show.value = !show.value
-        loadPosts()
+        refreshPosts()
     }
     const mapPosts = (rawPosts) => {
         return rawPosts.map(p => ({

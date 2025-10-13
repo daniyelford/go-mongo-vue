@@ -115,8 +115,8 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	form := r.MultipartForm
-	files := form.File["media"]
-	fmt.Printf("files to insert: %+v\n", files)
+	files := form.File["media[]"]
+	fmt.Printf("files to insert: %+v\n", form.File)
 	var mediaList []models.PostMedia
 	for _, header := range files {
 		file, err := header.Open()

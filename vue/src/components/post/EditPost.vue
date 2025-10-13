@@ -85,7 +85,11 @@ const emit = defineEmits(['update:show', 'updated'])
 const show = ref(props.modelValue)
 watch(() => props.modelValue, v => show.value = v)
 watch(show, v => emit('update:show', v))
-const post = ref({ ...props.postData })
+const post = ref({ title: '', content: '', media: [] })
+watch(() => props.postData, val => {
+  if (val) post.value = { ...val }
+})
+
 const files = ref([])
 const loading = ref(false)
 const mediaFile = ref(null)
