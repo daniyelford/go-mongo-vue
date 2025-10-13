@@ -4,5 +4,5 @@
 <RouterLink :to="{path:'/business'}">business</RouterLink>
 </template>
 <script setup>
-import Logout from './Logout.vue';
+import Logout from '@users/components/Logout.vue';
 </script>
