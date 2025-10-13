@@ -1,11 +1,8 @@
+version: "3.8"
+
 services:
   go:
-    build: 
-      context: .
-      dockerfile: go/Dockerfile
-    env_file:
-      - ./go/.env
-      - ./modules/users/go/.env
+    build: ./go
     image: dnylfrd/go-mongo-vue:go-1
     ports:
       - "8080:8080"
@@ -26,9 +23,7 @@ services:
       - MINIO_BUCKET=media
 
   vue:
-    build:
-      context: .
-      dockerfile: vue/Dockerfile
+    build: ./vue
     image: dnylfrd/go-mongo-vue:vue-1
     ports:
       - "3000:80"
@@ -47,7 +42,7 @@ services:
     volumes:
       - mongo-data:/data/db
     healthcheck:
-      test: ["CMD", "mongo", "--quiet", "--eval", "db.runCommand({ ping: 1 })"]
+      test: ["CMD", "mongo", "--quiet", "127.0.0.1/test", "--eval", "db.runCommand({ ping: 1 })"]
       interval: 10s
       timeout: 5s
       retries: 5

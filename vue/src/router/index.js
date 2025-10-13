@@ -1,18 +1,20 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { sendApi } from '@/plugins/api';
+import Login from '@/components/user/Login.vue';
+import Register from '@/components/user/Register.vue';
 import Dashboard from '@/components/Dashboard.vue';
 import Home from '@/components/Home.vue';
 import Welcome from '@/components/Welcome.vue';
 import NotFind from '@/components/NotFind.vue';
-import BusinessList from '@/components/business/BusinessList.vue';
-import { usersRoutes } from '@users/router'
+import Setting from '@/components/user/Setting.vue';
 const routes = [
   { path: '/', name: 'welcome', component: Welcome, meta: { isLogin: false } },
+  { path: '/login', name: 'login', component: Login, meta: { isLogin: false } },
+  { path: '/register', component: Register, name: 'register', meta: { isLogin: true } },
   { path: '/home', component: Home, name: 'home', meta: { isLogin: true, hasUserInfo: true } },
   { path: '/dashboard', component: Dashboard, name: 'dashboard', meta: { isLogin: true, hasUserInfo: true } },
-  { path: '/business', component: BusinessList, name: 'business', meta: { isLogin: true, hasUserInfo: true } },
-  { path: '/:pathMatch(.*)*', name: '404', component: NotFind },
-  ...usersRoutes
+  { path: '/setting', component: Setting, name: 'user-setting', meta: { isLogin: true, hasUserInfo: true } },
+  { path: '/:pathMatch(.*)*', name: '404', component: NotFind }
 ];
 const router = createRouter({
   history: createWebHistory(),

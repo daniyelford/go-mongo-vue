@@ -10,8 +10,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-      '@users': fileURLToPath(new URL('../modules/users/vue', import.meta.url)),
+      '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
 })

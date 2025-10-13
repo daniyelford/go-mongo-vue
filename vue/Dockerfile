@@ -1,14 +1,13 @@
 FROM node:20-bullseye AS build
 WORKDIR /app
-COPY vue/package*.json ./
+COPY package*.json ./
 RUN npm config set registry https://registry.npmmirror.com/
 RUN npm install --omit=optional --unsafe-perm \
     && npm install rollup@3.5.0 --save-dev
-COPY vue/ ./
-COPY modules/users/vue ./modules/users/vue
+COPY . .
 RUN npm run build
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
-COPY vue/nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

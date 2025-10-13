@@ -1,17 +1,49 @@
 package main
 
 import (
-	users "go-mongo-vue-users"
+	"context"
+	"fmt"
+	"go-mongo-vue-go/config"
+	"go-mongo-vue-go/router"
+	"go-mongo-vue-go/service"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var ctx = context.Background()
+
 func main() {
-	r, err := users.Init()
-	if err != nil {
-		log.Fatal("error:", err)
+	if err := godotenv.Load(); err != nil {
+		fmt.Println("⚠️ no .env file found, using system env")
 	}
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGO_URI")))
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := client.Ping(ctx, nil); err != nil {
+		log.Fatal("Mongo ping failed:", err)
+	}
+	config.InitMongo(client)
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     os.Getenv("REDIS_ADDR"),
+		Password: os.Getenv("REDIS_PASS"),
+		DB:       0,
+	})
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		log.Fatal("Redis ping failed:", err)
+	}
+	config.InitRedis(redisClient)
+	if err := service.MinioInit(); err != nil {
+		log.Fatal("MinIO init error:", err)
+	}
+	service.WebAuthnInit()
+	r := router.NewRouter()
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
