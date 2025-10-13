@@ -8,6 +8,7 @@ import (
 	"go-mongo-vue-go/models"
 	"go-mongo-vue-go/service"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -66,6 +67,24 @@ func GetAllPosts(w http.ResponseWriter, r *http.Request) {
 	if err := cursor.All(r.Context(), &posts); err != nil {
 		http.Error(w, `{"success":false,"error":"error reading data"}`, http.StatusInternalServerError)
 		return
+	}
+	publicEndpoint := os.Getenv("MINIO_PUBLIC_ENDPOINT")
+	if publicEndpoint == "" {
+		publicEndpoint = os.Getenv("MINIO_ENDPOINT")
+	}
+	bucket := os.Getenv("MINIO_BUCKET")
+
+	for i := range posts {
+		for j := range posts[i].Media {
+			if posts[i].Media[j].Filename != "" {
+				posts[i].Media[j].URL = fmt.Sprintf(
+					"http://%s/%s/%s",
+					publicEndpoint,
+					bucket,
+					url.PathEscape(posts[i].Media[j].Filename),
+				)
+			}
+		}
 	}
 	type PostWithSelf struct {
 		models.Post

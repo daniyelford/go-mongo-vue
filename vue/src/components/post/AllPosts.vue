@@ -2,7 +2,7 @@
     <b-card class="shadow-sm rounded-4">
         <div class="d-flex justify-content-between align-items-center mb-2">
             <b-card-title class="m-0">📄 Posts</b-card-title>
-            <b-button variant="success" size="sm" @click="show.value=true">➕ Add Post</b-button>
+            <b-button variant="success" size="sm" @click="addPost">➕ Add Post</b-button>
         </div>
         <b-row v-if="posts.length > 0" class="g-3">
             <b-col
@@ -38,7 +38,7 @@
                     {{ post.content }}
                 </p>
                 <div class="d-flex justify-content-between align-items-center">
-                    <small class="text-muted">🕓 {{ new Date(post.createdAt).toLocaleString() }}</small>
+                    <small class="text-muted">🕓 {{ formatDate(post.createdAt) }}</small>
                     <div v-if="post.self">
                     <b-button size="sm" variant="outline-warning" @click="editPost(post)">
                         ✏️
@@ -50,20 +50,16 @@
                 </div>
                 </b-card>
             </b-col>
-            </b-row>
+        </b-row>
         <b-alert v-else show variant="danger">
             You have no posts yet.
         </b-alert>
-        <div class="text-center mt-3">
-          <b-button
-            variant="primary"
-            @click="loadMore"
-            :disabled="loading || finished">
-            {{ loading ? 'loading...' : finished ? 'end' : 'more' }}
-          </b-button>
+        <div ref="infiniteScrollTrigger" class="text-center my-3 w-100">
+            <b-spinner v-if="loading" small></b-spinner>
+            <small v-else-if="finished" class="text-muted">📍 No more posts</small>
         </div>
     </b-card>
-    <BaseModal v-model="show" size="lg" title="add posts">
+    <BaseModal v-model="showAdd" size="lg" title="add posts">
         <AddPost @add="add"/>
     </BaseModal>
     <BaseModal v-model="showEdit" size="lg" title="Edit Post">
@@ -80,7 +76,7 @@
     import EditPost from '@/components/post/EditPost.vue';
     import { Swiper, SwiperSlide } from 'swiper/vue';
     import 'swiper/swiper-bundle.css';
-    const show = ref(false)
+    const showAdd = ref(false)
     const showEdit = ref(false)
     const posts = ref([])
     const page = ref(1)
@@ -88,9 +84,11 @@
     const loading = ref(false)
     const finished = ref(false)
     const editingPost = ref(null)
+    const infiniteScrollTrigger = ref(null)
+    let observer = null
     let refreshInterval = null
     const add = () => {
-        show.value = false
+        showAdd.value = false
         refreshPosts()
     }
     const mapPosts = (rawPosts) => {
@@ -100,8 +98,18 @@
             title: p.Title,
             content: p.Content,
             media: p.media || [],
-            self: p.self
+            self: p.self,
+            createdAt: p.CreatedAt ? new Date(p.CreatedAt) : null
         }))
+    }
+    const formatDate = (d) => {
+        if (!d) return ''
+        let dateObj = d instanceof Date ? d : new Date(d)
+        if (isNaN(dateObj.getTime())) {
+            return ''
+        }
+    //   return dateObj.toLocaleString('fa-IR')
+        return dateObj.toLocaleString()
     }
     const loadMore = () => loadPosts()
     const deletePost = async (id) => {
@@ -126,6 +134,9 @@
     const editPost = (post) => {
         showEdit.value = true
         editingPost.value = { ...post }
+    }
+    const addPost = () => {
+        showAdd.value=true
     }
     const loadPosts = async () => {
         if (loading.value || finished.value) return
@@ -164,20 +175,41 @@
                 },
                 autoCheckToken:true
             })            
-            const freshPosts = mapPosts(res.data || [])
-            const existingIds = new Set(posts.value.map(p => p._id))
+            const freshPosts = mapPosts(res.data || []);
+            const existingIds = new Set(posts.value.map(p => p._id));
             freshPosts.forEach(p => {
-                if (!existingIds.has(p._id)) posts.value.unshift(p)
-            })
+                const existingIndex = posts.value.findIndex(ep => ep._id === p._id);
+                if (existingIndex === -1) {
+                    posts.value.unshift(p);
+                } else {
+                    const old = posts.value[existingIndex];
+                    const hasChanged = JSON.stringify(old) !== JSON.stringify(p);
+                    if (hasChanged) {
+                        posts.value[existingIndex] = p;
+                    }
+                }
+            });
         } catch (e) {
             console.error('خطا در رفرش پست‌ها:', e)
         }
     }
     onMounted(() => {
         loadPosts()
+        observer = new IntersectionObserver((entries) => {
+            const entry = entries[0]
+            if (entry.isIntersecting && !loading.value && !finished.value) {
+                loadPosts()
+            }
+        }, { threshold: 0.5 })
+        if (infiniteScrollTrigger.value) {
+            observer.observe(infiniteScrollTrigger.value)
+        }
         refreshInterval = setInterval(refreshPosts, 15000)
     })
     onUnmounted(() => {
+        if (observer && infiniteScrollTrigger.value) {
+            observer.unobserve(infiniteScrollTrigger.value)
+        }
         if (refreshInterval){
             clearInterval(refreshInterval)
             refreshInterval = null

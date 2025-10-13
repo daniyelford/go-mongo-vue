@@ -117,7 +117,7 @@ const submitEdit = async () => {
     if (res.success) {
       emit('edit')
     } else {
-      alert(res.error || 'Update failed')
+      alert(res.error.message || 'Update failed')
     }
   } catch (e) {
     console.error(e)
