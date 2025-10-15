@@ -1,10 +1,11 @@
 import router from '@/router';
 import axios from 'axios';
+// const apiGo = axios.create({ baseURL: '/api', timeout: 5000 })
+const apiLaravel = axios.create({ baseURL: '/laravel-api/api', timeout: 5000 })
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: apiLaravel,
   timeout: 5000,
 });
-// لاگ گرفتن از پاسخ‌های خطا
 api.interceptors.response.use(
   (response) => response,
   (error) => {

@@ -4,6 +4,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 export default defineConfig({
+  base: '/vue/',
   plugins: [
     vue(),
     vueDevTools(),
@@ -13,4 +14,11 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  build: {
+    outDir: '../laravel/public/vue',
+    emptyOutDir: true,
+    rollupOptions: {
+      input: './index.html',
+    }
+  }
 })
