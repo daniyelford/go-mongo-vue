@@ -29,6 +29,7 @@ services:
     depends_on:
       - go
       - redis
+      - mysql
     environment:
       - APP_ENV=local
       - APP_DEBUG=true
@@ -36,6 +37,12 @@ services:
       - GO_API_URL=http://go:8080
       - REDIS_HOST=redis
       - REDIS_PASSWORD=redisPass123
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=laravel
+      - DB_USERNAME=root
+      - DB_PASSWORD=secret
     volumes:
       - ./laravel:/var/www/html
     expose:
@@ -61,6 +68,24 @@ services:
       - go
     volumes:
       - ./vue/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: root
+      MYSQL_PASSWORD: secret
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   mongo:
     image: mongo:4.4
@@ -102,3 +127,4 @@ volumes:
   mongo-data:
   redis-data:
   minio-data:
+  mysql-data:

@@ -2,10 +2,20 @@
 
 namespace App\Http\Request;
 
+use Illuminate\Support\Facades\DB;
+
 class VueRequest
 {
     public static function send(array $data)
     {
-        // Here you can send data to Go server using HTTP client
+        // ذخیره داده‌ها در جدول api_requests
+        DB::table('api_requests')->insert([
+            'action' => $data['action'] ?? null,
+            'payload' => json_encode($data['payload'] ?? []),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // اینجا می‌تونی کد ارسال HTTP به سرور Go هم اضافه کنی
     }
 }

@@ -11,3 +11,4 @@ and use cmd
 .\mc.exe anonymous set public local/media
 so you can use this with docker in local
 docker-compose up --build
+docker-compose up -d

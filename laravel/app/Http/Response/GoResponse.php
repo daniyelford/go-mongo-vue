@@ -2,11 +2,19 @@
 
 namespace App\Http\Response;
 
+use Illuminate\Support\Facades\DB;
+
 class GoResponse
 {
     public static function handle($response)
     {
-        // Here you can format response from Go
+        // ذخیره پاسخ در جدول api_responses
+        DB::table('api_responses')->insert([
+            'response' => json_encode($response),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         return $response;
     }
 }
