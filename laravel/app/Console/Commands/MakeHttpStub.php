@@ -7,37 +7,78 @@ use Illuminate\Support\Facades\File;
 
 class MakeHttpStub extends Command
 {
-    protected $signature = 'make:http-stub';
-    protected $description = 'Create Http/Request and Http/Response folders with base classes';
+    protected $signature = 'make:http-stub {--force : بازسازی در صورت وجود}';
+    protected $description = 'ایجاد ساختار پایه Http Request و Response برای ارتباط با Go API';
 
     public function handle()
     {
-        $folders = [
+        $basePaths = [
             app_path('Http/Request'),
             app_path('Http/Response'),
         ];
 
-        foreach ($folders as $folder) {
-            if (!File::exists($folder)) {
-                File::makeDirectory($folder, 0755, true);
-                $this->info("Folder created: $folder");
-            } else {
-                $this->info("Folder already exists: $folder");
+        foreach ($basePaths as $path) {
+            if (!File::exists($path)) {
+                File::makeDirectory($path, 0755, true);
+                $this->info("📁 پوشه ساخته شد: $path");
             }
         }
 
-        $requestFile = app_path('Http/Request/VueRequest.php');
-        if (!File::exists($requestFile)) {
-            File::put($requestFile, "<?php\n\nnamespace App\Http\Request;\n\nclass VueRequest\n{\n    public static function send(array \$data)\n    {\n        // Here you can send data to Go server using HTTP client\n    }\n}");
-            $this->info("File created: $requestFile");
+        // ایجاد VueRequest
+        $vueRequestPath = app_path('Http/Request/VueRequest.php');
+        if (!File::exists($vueRequestPath) || $this->option('force')) {
+            File::put($vueRequestPath, <<<PHP
+<?php
+
+namespace App\Http\Request;
+
+use Illuminate\Support\Facades\DB;
+
+class VueRequest
+{
+    public static function send(array \$data)
+    {
+        DB::table('api_requests')->insert([
+            'action' => \$data['action'] ?? null,
+            'payload' => json_encode(\$data['payload'] ?? []),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // در اینجا می‌توانی درخواست HTTP را به Go ارسال کنی
+    }
+}
+PHP);
+            $this->info("✅ فایل ساخته شد: $vueRequestPath");
         }
 
-        $responseFile = app_path('Http/Response/GoResponse.php');
-        if (!File::exists($responseFile)) {
-            File::put($responseFile, "<?php\n\nnamespace App\Http\Response;\n\nclass GoResponse\n{\n    public static function handle(\$response)\n    {\n        // Here you can format response from Go\n        return \$response;\n    }\n}");
-            $this->info("File created: $responseFile");
+        // ایجاد GoResponse
+        $goResponsePath = app_path('Http/Response/GoResponse.php');
+        if (!File::exists($goResponsePath) || $this->option('force')) {
+            File::put($goResponsePath, <<<PHP
+<?php
+
+namespace App\Http\Response;
+
+use Illuminate\Support\Facades\DB;
+
+class GoResponse
+{
+    public static function handle(\$response)
+    {
+        DB::table('api_responses')->insert([
+            'response' => json_encode(\$response),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return \$response;
+    }
+}
+PHP);
+            $this->info("✅ فایل ساخته شد: $goResponsePath");
         }
 
-        $this->info('Http stub generated successfully!');
+        $this->info('🎉 ساختار کامل Http Request و Response آماده است!');
     }
 }

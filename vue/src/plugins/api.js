@@ -46,6 +46,8 @@ export async function sendApi({ method = 'get', url = '', data = {}, headers = {
         const res = await api.get('/auth/validate', {
           headers: { Authorization: `Bearer ${token}` }
         });
+  console.log(res);
+
         if (res.data?.expired) {
           const refreshRes = await api.post('/token/refresh', 
             { refreshToken: getRefreshToken() },

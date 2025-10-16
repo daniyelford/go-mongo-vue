@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 
 class AuthController extends GoApiController
 {
+    // آرایه endpoint ها: key = نام متد، value = endpoint Go
     protected $routes = [
         'hasFingerPrint' => '/auth/has-finger-print',
         'sendCode' => '/auth/send-code',
@@ -20,11 +21,14 @@ class AuthController extends GoApiController
         'registerFingerPrintStart' => '/auth/register-finger-start',
         'registerFingerPrintEnd' => '/auth/register-finger-end',
     ];
+
+    // فانکشن عمومی که همه درخواست‌ها ازش عبور می‌کنن
     public function call(Request $request, $action)
     {
         if (!isset($this->routes[$action])) {
             return response()->json(['status' => 'error', 'message' => 'متد نامعتبر']);
         }
+
         $endpoint = $this->routes[$action];
         return $this->sendToGo($endpoint, $request->all());
     }

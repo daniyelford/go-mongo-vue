@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y \
     git unzip libzip-dev zip curl libpng-dev libonig-dev libxml2-dev \
     && docker-php-ext-install pdo_mysql zip bcmath gd
 
-COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.8.8 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
