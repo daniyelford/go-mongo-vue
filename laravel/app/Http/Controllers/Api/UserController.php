@@ -5,8 +5,8 @@ use Illuminate\Http\Request;
 class UserController extends GoApiController
 {
     protected $routes = [
-        'update' => '/user/update',
-        'info'   => '/user/info',
+        'update' => '/api/user/update',
+        'info'   => '/api/user/info',
     ];
     public function call(Request $request, $action)
     {

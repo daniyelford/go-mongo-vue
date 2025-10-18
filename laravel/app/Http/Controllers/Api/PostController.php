@@ -5,10 +5,10 @@ use Illuminate\Http\Request;
 class PostController extends GoApiController
 {
     protected $routes = [
-        'getAll' => '/posts/all',
-        'create' => '/posts/create',
-        'edit' => '/posts/edit',
-        'delete' => '/posts/delete',
+        'getAll' => '/api/posts/all',
+        'create' => '/api/posts/create',
+        'edit' => '/api/posts/edit',
+        'delete' => '/api/posts/delete',
     ];
     public function call(Request $request, $action)
     {

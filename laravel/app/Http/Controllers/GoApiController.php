@@ -15,7 +15,6 @@ class GoApiController extends Controller
     }
 
     /**
-     * ارسال درخواست به API Go
      *
      * @param string $endpoint
      * @param array $data
