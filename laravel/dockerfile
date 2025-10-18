@@ -1,33 +1,11 @@
 FROM php:8.3-fpm
-
-# نصب پکیج‌های لازم
 RUN apt-get update && apt-get install -y \
     git unzip libzip-dev zip curl libpng-dev libonig-dev libxml2-dev bash netcat-openbsd \
     && docker-php-ext-install pdo_mysql zip bcmath gd
-
-# نصب composer
 COPY --from=composer:2.8.8 /usr/bin/composer /usr/bin/composer
-
-# مسیر کاری
 WORKDIR /var/www/html
-
-# کپی کل پروژه
 COPY . .
-
-# اضافه کردن wait-for-it.sh از گیت‌هاب (یا لوکال)
-# RUN curl -Lo /usr/local/bin/wait-for-it.sh https://github.com/vishnubob/wait-for-it/raw/master/wait-for-it.sh \
-#     && chmod +x /usr/local/bin/wait-for-it.sh
-
-# نصب پکیج‌های composer
 RUN composer install --no-interaction --optimize-autoloader && rm -rf /root/.composer/cache
-
-# دسترسی به پوشه‌های مهم لاراول
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-
-# پورت برای PHP-FPM
 EXPOSE 7000
 CMD php artisan serve --host=0.0.0.0 --port=7000
-
-# اجرای PHP-FPM بعد از صبر برای MySQL
-# CMD ["bash", "-c", "./wait-for-it.sh mysql:3306 -- php-fpm"]
-
