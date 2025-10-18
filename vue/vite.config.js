@@ -14,11 +14,4 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
-  build: {
-    outDir: '../laravel/public/vue',
-    emptyOutDir: true,
-    rollupOptions: {
-      input: './index.html',
-    }
-  }
 })

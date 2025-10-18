@@ -10,5 +10,10 @@ and use cmd
 .\mc.exe alias set local http://127.0.0.1:9000 admin password123
 .\mc.exe anonymous set public local/media
 so you can use this with docker in local
-docker-compose up --build
 docker-compose up -d
+docker exec -it laravel php artisan migrate
+docker-compose up --build
+
+docker compose build laravel --no-cache
+docker compose up laravel
+

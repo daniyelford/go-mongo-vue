@@ -72,7 +72,7 @@
     </b-form>
 </template>
 <script setup>
-import { ref, watch, defineEmits, defineProps } from 'vue'
+import { ref, watch } from 'vue'
 import { sendApi } from '@/plugins/api'
 const props = defineProps({
   postData: Object

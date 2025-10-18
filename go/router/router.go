@@ -1,6 +1,7 @@
 package router
 
 import (
+	"go-mongo-vue-go/config"
 	"go-mongo-vue-go/handlers"
 	"go-mongo-vue-go/middleware"
 
@@ -9,6 +10,7 @@ import (
 
 func NewRouter() *mux.Router {
 	r := mux.NewRouter()
+	r.HandleFunc("/health", config.Health).Methods("GET", "HEAD")
 	r.HandleFunc("/api/login/fingerPrint/has", handlers.HasFingerPrint).Methods("POST")
 	r.HandleFunc("/api/login/send", handlers.SendCode).Methods("POST")
 	r.HandleFunc("/api/login/verify", handlers.VerifyCode).Methods("POST")

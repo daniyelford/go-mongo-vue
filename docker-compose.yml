@@ -1,7 +1,70 @@
 services:
+  # mysql:
+  #   image: mysql:8.0
+  #   container_name: mysql
+  #   environment:
+  #     MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+  #     MYSQL_DATABASE: laravel
+  #   volumes:
+  #     - mysql-data:/var/lib/mysql
+  #   # healthcheck:
+  #   #   test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root --silent"]
+  #   #   interval: 10s
+  #   #   timeout: 10s
+  #   #   retries: 10
+  #   #   start_period: 30s
+
+  #   networks:
+  #     - app-network
+  mongo:
+    image: mongo:4.4
+    container_name: mongodb
+    environment:
+      - MONGO_INITDB_DATABASE=goMongoVue
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--quiet", "127.0.0.1/test", "--eval", "db.runCommand({ ping: 1 })"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+  redis:
+    image: redis:7
+    container_name: redisdb
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+  minio:
+    image: minio/minio
+    container_name: minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=password123
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
   go:
     build: ./go
     image: dnylfrd/go-mongo-vue:go-1
+    container_name: go-server
     ports:
       - "8080:8080"
     depends_on:
@@ -19,21 +82,37 @@ services:
       - MINIO_ACCESS_KEY=admin
       - MINIO_SECRET_KEY=password123
       - MINIO_BUCKET=media
-
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
   laravel:
     build:
       context: ./laravel
       dockerfile: Dockerfile
     image: dnylfrd/go-mongo-vue:laravel-1
     container_name: laravel
+    ports:
+      - "7000:7000"
     depends_on:
-      - go
-      - redis
-      - mysql
+      go:
+        condition: service_healthy
+      # redis:
+      #   condition: service_healthy
+      # mysql:
+      #   condition: service_started
+      # vue:
+      #   condition: service_completed_successfully
+    # command: ["sh", "-c", "wait-for-it.sh mysql:3306 -- php-fpm"]
+
+    # command: ["sh", "-c", "./wait-for-it.sh mysql:3306 -- php-fpm"]
     environment:
       - APP_ENV=local
       - APP_DEBUG=true
-      - APP_URL=http://localhost:9002
+      - APP_URL=http://localhost:7000
       - GO_API_URL=http://go:8080
       - REDIS_HOST=redis
       - REDIS_PASSWORD=redisPass123
@@ -42,87 +121,42 @@ services:
       - DB_PORT=3306
       - DB_DATABASE=laravel
       - DB_USERNAME=root
-      - DB_PASSWORD=secret
+      - DB_PASSWORD=
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - ./laravel:/var/www/html
-    expose:
-      - "9002"
-
-  nginx-laravel:
-    image: nginx:latest
-    container_name: nginx-laravel
-    ports:
-      - "9002:90"
-    volumes:
-      - ./laravel:/var/www/html
-      - ./laravel/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - laravel
-
+      - ./vue/dist:/var/www/html/public/vue
+    networks:
+      - app-network
   vue:
     build: ./vue
     image: dnylfrd/go-mongo-vue:vue-1
+    container_name: vue-client
     ports:
       - "3000:80"
     depends_on:
-      - go
+      go:
+        condition: service_healthy
+      laravel:
+        condition: service_healthy
     volumes:
       - ./vue/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-
-  mysql:
-    image: mysql:8.0
-    container_name: mysql
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: secret
-      MYSQL_DATABASE: laravel
-    volumes:
-      - mysql-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  mongo:
-    image: mongo:4.4
-    container_name: mongodb
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_DATABASE=goMongoVue
-    volumes:
-      - mongo-data:/data/db
-    healthcheck:
-      test: ["CMD", "mongo", "--quiet", "127.0.0.1/test", "--eval", "db.runCommand({ ping: 1 })"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:7
-    container_name: redisdb
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-
-  minio:
-    image: minio/minio
-    container_name: minio
-    command: server /data --console-address ":9001"
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      - MINIO_ROOT_USER=admin
-      - MINIO_ROOT_PASSWORD=password123
-    volumes:
-      - minio-data:/data
-
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost/"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    networks:
+      - app-network
 volumes:
   mongo-data:
   redis-data:
   minio-data:
   mysql-data:
+networks:
+  app-network:
+    driver: bridge
