@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Request;
 
 class GoApiController extends Controller
 {
@@ -21,22 +22,20 @@ class GoApiController extends Controller
      * @param string $method
      * @return array
      */
-    protected function sendToGo(string $endpoint, array $data = [], string $method = 'POST'): array
+    protected function sendToGo(string $endpoint, array $data = [], string $method = 'POST', Request $request = null): array
     {
-        $response = Http::withHeaders([
-            'X-API-KEY' => session('api_key') ?? ''
-        ])->timeout(10);
-
-        switch (strtoupper($method)) {
-            case 'GET':
-                $res = $response->get(rtrim($this->goBaseUrl, '/') . '/' . ltrim($endpoint, '/'), $data);
-                break;
-
-            case 'POST':
-            default:
-                $res = $response->post(rtrim($this->goBaseUrl, '/') . '/' . ltrim($endpoint, '/'), $data);
-        }
-
-        return $res->json() ?? [];
+        $headers = $request?->headers->all() ?? [];
+        $headers = collect($headers)->map(fn($h) => $h[0] ?? '')->toArray();
+        $headers['X-API-KEY'] = $headers['X-API-KEY'] ?? '';
+        $response = Http::withHeaders($headers)->timeout(10);
+        $url = rtrim($this->goBaseUrl, '/') . '/' . ltrim($endpoint, '/');
+        $method = strtoupper($method);
+        $res = match ($method) {
+            'GET' => $response->get($url, $data),
+            'PUT' => $response->put($url, $data),
+            'DELETE' => $response->delete($url, $data),
+            default => $response->post($url, $data),
+        };
+        return $res->json() ?? ['raw' => $res->body()];
     }
 }

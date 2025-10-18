@@ -5,15 +5,16 @@ use Illuminate\Http\Request;
 class UserController extends GoApiController
 {
     protected $routes = [
-        'update' => '/api/user/update',
-        'info'   => '/api/user/info',
+        'update' => ['url'=>'/api/user/update','method'=>'PUT'],
+        'info'   => ['url'=>'/api/user/info','method'=>'GET'],
     ];
     public function call(Request $request, $action)
     {
         if (!isset($this->routes[$action])) {
             return response()->json(['status' => 'error', 'message' => 'متد نامعتبر']);
         }
-        $endpoint = $this->routes[$action];
-        return $this->sendToGo($endpoint, $request->all());
+        $endpoint = $this->routes[$action]['url'];
+        $method = $this->routes[$action]['method'];
+        return $this->sendToGo($endpoint, $request->all(),$method,$request);
     }
 }

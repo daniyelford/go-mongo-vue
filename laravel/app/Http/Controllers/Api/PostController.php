@@ -5,18 +5,18 @@ use Illuminate\Http\Request;
 class PostController extends GoApiController
 {
     protected $routes = [
-        'getAll' => '/api/posts/all',
-        'create' => '/api/posts/create',
-        'edit' => '/api/posts/edit',
-        'delete' => '/api/posts/delete',
+        'getAll' => ['url'=>'/api/posts/all','method'=>'POST'],
+        'create' => ['url'=>'/api/posts/create','method'=>'POST'],
+        'edit' => ['url'=>'/api/posts/edit','method'=>'PUT'],
+        'delete' => ['url'=>'/api/posts/delete','method'=>'DELETE'],
     ];
     public function call(Request $request, $action)
     {
         if (!isset($this->routes[$action])) {
             return response()->json(['status' => 'error', 'message' => 'متد نامعتبر']);
         }
-        $endpoint = $this->routes[$action];
-
-        return $this->sendToGo($endpoint, $request->all());
+        $endpoint = $this->routes[$action]['url'];
+        $method = $this->routes[$action]['method'];
+        return $this->sendToGo($endpoint, $request->all(),$method,$request);
     }
 }

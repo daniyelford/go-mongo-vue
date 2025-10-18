@@ -17,40 +17,38 @@ class JwtTokenV
      */
     public function handle(Request $request, Closure $next)
     {
-        $authHeader = $request->header('Authorization');
+        // $authHeader = $request->header('Authorization');
+        // // بررسی header Authorization
+        // if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
+        //     return response()->json(['message' => 'missing token'], 401);
+        // }
 
-        // بررسی header Authorization
-        if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
-            return response()->json(['message' => 'missing token'], 401);
-        }
+        // $tokenString = substr($authHeader, 7);
 
-        $tokenString = substr($authHeader, 7);
+        // try {
+        //     // بررسی توکن با JwtHelper
+        //     $credentials = JwtHelper::verifyToken($tokenString);
+        //     if (!$credentials || empty($credentials->mobile)) {
+        //         return response()->json(['message' => 'invalid token claims'], 401);
+        //     }
 
-        try {
-            // بررسی توکن با JwtHelper
-            $credentials = JwtHelper::verifyToken($tokenString);
+        //     $mobile = $credentials->mobile;
 
-            if (!$credentials || empty($credentials->mobile)) {
-                return response()->json(['message' => 'invalid token claims'], 401);
-            }
+        //     // بررسی Redis برای اطمینان از معتبر بودن token
+        //     $val = Redis::get("token:$mobile");
+        //     if (!$val || $val !== $tokenString) {
+        //         return response()->json(['message' => 'expired or revoked token'], 401);
+        //     }
 
-            $mobile = $credentials->mobile;
+        //     // ست کردن موبایل در request برای کنترلرها
+        //     $request->attributes->set('mobile', $mobile);
 
-            // بررسی Redis برای اطمینان از معتبر بودن token
-            $val = Redis::get("token:$mobile");
-            if (!$val || $val !== $tokenString) {
-                return response()->json(['message' => 'expired or revoked token'], 401);
-            }
-
-            // ست کردن موبایل در request برای کنترلرها
-            $request->attributes->set('mobile', $mobile);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'invalid token',
-                'error' => $e->getMessage()
-            ], 401);
-        }
+        // } catch (\Exception $e) {
+        //     return response()->json([
+        //         'message' => 'invalid token',
+        //         'error' => $e->getMessage()
+        //     ], 401);
+        // }
 
         return $next($request);
     }
