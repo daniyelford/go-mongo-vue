@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHistory , createWebHashHistory } from 'vue-router';
 import { sendApi } from '@/plugins/api';
 import Login from '@/components/user/Login.vue';
 import Register from '@/components/user/Register.vue';
@@ -16,8 +16,11 @@ const routes = [
   { path: '/setting', component: Setting, name: 'user-setting', meta: { isLogin: true, hasUserInfo: true } },
   { path: '/:pathMatch(.*)*', name: '404', component: NotFind }
 ];
+const history = import.meta.env.VITE_EXTENSION
+  ? createWebHashHistory()
+  : createWebHistory()
 const router = createRouter({
-  history: createWebHistory(),
+  history: history,
   routes,
 });
 async function checkTokenStatus(isLogin) {

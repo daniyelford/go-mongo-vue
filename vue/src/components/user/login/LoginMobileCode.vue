@@ -1,18 +1,19 @@
 <template>
     <b-form @submit.prevent="$emit('submit')">
         <span>{{ props.mobile }}</span>
-        <b-button style="float:right;" size="sm" variant="secondary" @click="editMobile">Edit Mobile</b-button>
+        <b-button style="float:right;" size="sm" variant="danger" @click="editMobile">Edit Mobile</b-button>
         <div style="clear:both;"></div>
         <b-form-group label="Enter Code" label-for="code-input" class="my-4">
             <Vue3OtpInput
                 ref="otpInput"
                 v-model:value="code"
                 :num-inputs="6"
+                @on-complete="$emit('submit')"
                 @on-change="onCodeChange"
                 :should-auto-focus="true"
                 input-classes="otp-input"
                 separator="-"
-            />
+                />
         </b-form-group>
         <div class="d-flex justify-content-between mb-3">
             <b-button class="w-100" size="lg" variant="outline-primary" @click="resendCode" :disabled="props.disableResend||props.loading">
@@ -62,6 +63,6 @@
 </script>
 <style>
     .otp-input-container{ justify-content: space-evenly !important; }
-    .otp-input { width: 35px; height: 45px; text-align: center; font-size: 20px; border: 1px solid #ccc; border-radius: 6px; }
+    .otp-input { width: 100%; height: 45px; text-align: center; font-size: 20px; border: 1px solid #ccc; border-radius: 6px; }
     .btn-disabled-custom{ cursor: not-allowed; pointer-events: none; opacity: 0.6; }
 </style>

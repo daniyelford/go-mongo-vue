@@ -1,7 +1,7 @@
 <template>
     <b-form @submit.prevent="$emit('submit')">
-        <div class="d-flex align-items-center mb-3">
-            <b-form-group label="Country" label-for="country-select" class="flex-grow-4">
+        <div class="d-flex align-items-center my-1">
+            <b-form-group label="Country" label-for="country-select" class="flex-grow-4 p-1">
                 <v-select
                 id="country-select"
                 :searchable="true"
@@ -12,7 +12,7 @@
                 placeholder="Select code"
                 />
             </b-form-group>
-            <b-form-group label="Mobile" label-for="mobile-input" class="flex-grow-6">
+            <b-form-group label="Mobile" label-for="mobile-input" class="flex-grow-6 p-1">
                 <b-form-input
                 id="mobile-input"
                 v-model="innerMobile"
@@ -61,4 +61,5 @@
     .flex-grow-6 { flex: 6; }
     .vs__selected-options { padding: 0 !important; flex-wrap: nowrap !important; }
     input.vs__search { padding: 0 !important; width: 0 !important; max-width: 0 !important; }
+    #country-select > div {padding: 1.4px 0px 5px 5px !important;}
 </style>

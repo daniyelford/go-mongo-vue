@@ -1,6 +1,7 @@
 import router from '@/router';
 import axios from 'axios';
-const api = axios.create({ baseURL: '/api', timeout: 5000 }) // go
+const api = axios.create({ 
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api', timeout: 5000 }) // go
 api.interceptors.response.use(
   (response) => response,
   (error) => {

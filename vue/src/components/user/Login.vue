@@ -1,6 +1,7 @@
 <template>
   <b-container class="p-4 mt-5 alert alert-light" style="max-width: 400px;">
-    <h2 class="mb-4">Login</h2>
+    <h2 class="mb-4 text-center">Login</h2>
+    <div v-if="error" class="my-1 alert alert-danger text-danger">❌ {{ error }}</div>
     <LoginMobileInput
       v-if="step === 1"
       :countries-code="countriesCode"
@@ -25,11 +26,10 @@
       @resend="resendCode"
       @edit="editMobile"
     />
-    <FingerLogin v-if="step === 1" :mobile="country+mobile" />
     <b-alert v-if="loading || disableSend" >
       The login button is locked for logging in too much.
     </b-alert>
-    <div v-if="error" class="mt-4 text-danger">❌ {{ error }}</div>
+    <FingerLogin v-if="step === 1" :mobile="country+mobile" />
   </b-container>
 </template>
 
